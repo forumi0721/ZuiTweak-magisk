@@ -491,7 +491,7 @@ if [ ! -z "${row_apps_debloat_choice}" ]; then
             pm uninstall ${pkg}
         done
 
-        for pkg_path in com.tblenovo.center,/system/priv-app/TabletVantage/TabletVantage.apk com.google.android.apps.messaging,/product/priv-app/Messages/Messages.apk com.google.android.partnersetup,/product/priv-app/GooglePartnerSetup/GooglePartnerSetup.apk com.google.android.contacts,/product/app/GoogleContacts/GoogleContacts.apk
+        for pkg_path in com.tblenovo.center,/system/priv-app/TabletVantage/TabletVantage.apk com.google.android.apps.messaging,/product/priv-app/Messages/Messages.apk com.google.android.partnersetup,/product/priv-app/GooglePartnerSetup/GooglePartnerSetup.apk com.google.android.contacts,/product/app/GoogleContacts/GoogleContacts.apk com.lenovo.rt,/system/priv-app/TabtopPicks/TabtopPicks.apk
         do
             pkg=${pkg_path/,*/}
             path=${pkg_path/*,/}
