@@ -346,34 +346,39 @@ if [ ! -z "${google_play_choice}" ]; then
         #sleep 2
         #if [ "$(pm path com.android.vending)" = "package:/product/priv-app/GooglePlayServicesUpdater/GooglePlayServicesUpdater.apk" ]; then
         #    ui_print " - com.android.vending"
-        #    if [ "${environment}" = "apatch" ]; then
-        #        pm install -r $MODPATH/common/files/stonecold-playstore/com.android.vending.apk
-        #    else
-        #        mkdir -p ${product_path}/priv-app/GooglePlay
-        #        cp $MODPATH/common/files/stonecold-playstore/com.android.vending.apk ${product_path}/priv-app/GooglePlay/GooglePlay.apk
-        #        if [ "${environment}" = "magisk" ]; then
-        #            mkdir -p ${product_path}/priv-app/GooglePlayServicesUpdater
-        #            touch ${product_path}/priv-app/GooglePlayServicesUpdater/.replace
-        #        else
-        #            mkdir -p ${product_path}/priv-app
-        #            mknod ${product_path}/priv-app/GooglePlayServicesUpdater c 0 0
-        #            #touch ${product_path}/priv-app/GooglePlayServicesUpdater
-        #            #chmod 000 ${product_path}/priv-app/GooglePlayServicesUpdater
-        #        fi
-        #    fi
+        #    #if [ "${environment}" = "apatch" ]; then
+        #    #    pm install -r $MODPATH/common/files/stonecold-playstore/com.android.vending.apk
+        #    #else
+        #    #    mkdir -p ${product_path}/priv-app/GooglePlay
+        #    #    cp $MODPATH/common/files/stonecold-playstore/com.android.vending.apk ${product_path}/priv-app/GooglePlay/GooglePlay.apk
+        #    #    if [ "${environment}" = "magisk" ]; then
+        #    #        mkdir -p ${product_path}/priv-app/GooglePlayServicesUpdater
+        #    #        touch ${product_path}/priv-app/GooglePlayServicesUpdater/.replace
+        #    #    else
+        #    #        mkdir -p ${product_path}/priv-app
+        #    #        mknod ${product_path}/priv-app/GooglePlayServicesUpdater c 0 0
+        #    #        #touch ${product_path}/priv-app/GooglePlayServicesUpdater
+        #    #        #chmod 000 ${product_path}/priv-app/GooglePlayServicesUpdater
+        #    #    fi
+        #    #fi
+        #    pm install -r $MODPATH/common/files/stonecold-playstore/com.android.vending.apk
         #fi
         ui_print " - com.android.vending"
-        if [ -e /product/priv-app/GooglePlayServicesUpdater ]; then
-            if [ "${environment}" = "magisk" ]; then
-                mkdir -p ${product_path}/priv-app/GooglePlayServicesUpdater
-                touch ${product_path}/priv-app/GooglePlayServicesUpdater/.replace
-            else
-                mkdir -p ${product_path}/priv-app
-                mknod ${product_path}/priv-app/GooglePlayServicesUpdater c 0 0
-            fi
+        if [ "${environment}" = "magisk" ]; then
+            mkdir -p ${product_path}/priv-app/GooglePlayServicesUpdater
+            touch ${product_path}/priv-app/GooglePlayServicesUpdater/.replace
+        else
+            mkdir -p ${product_path}/priv-app
+            mknod ${product_path}/priv-app/GooglePlayServicesUpdater c 0 0
         fi
         mkdir -p ${product_path}/priv-app/Phonesky
         cp $MODPATH/common/files/stonecold-playstore/com.android.vending.apk ${product_path}/priv-app/Phonesky/Phonesky.apk
+        dex2oat64 --dex-file=${product_path}/priv-app/Phonesky/Phonesky.apk --oat-file=${product_path}/priv-app/Phonesky/Phonesky.odex
+        mkdir -p ${product_path}/priv-app/Phonesky/oat/arm64
+        mv ${product_path}/priv-app/Phonesky/Phonesky.odex ${product_path}/priv-app/Phonesky/Phonesky.vdex ${product_path}/priv-app/Phonesky/oat/arm64/
+        mkdir -p ${product_path}/priv-app/Phonesky/lib/arm64
+        cp -a $MODPATH/common/files/stonecold-playstore/lib/arm64/* ${product_path}/priv-app/Phonesky/lib/arm64/
+        chmod 644 ${product_path}/priv-app/Phonesky/lib/arm64/*
         ui_print " - /product/etc/permissions"
         mkdir -p ${product_path}/etc/permissions
         cp $MODPATH/common/files/stonecold-playstore/services.cn.google.xml ${product_path}/etc/permissions/
