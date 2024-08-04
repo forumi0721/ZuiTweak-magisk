@@ -329,7 +329,7 @@ if [ ! -z "${korean_patch_choice}" ]; then
     ui_print ""
 fi
 sed -i '/#locale#/d' $MODPATH/post-fs-data.sh
-sed -i 's#locale#/d' $MODPATH/service.sh
+sed -i '/#locale#/d' $MODPATH/service.sh
 
 # Google Play Activation
 STEP=$((STEP + 1))
@@ -591,7 +591,7 @@ if [ ! -z "${pen_service_choice}" ]; then
     fi
     ui_print ""
 fi
-sed -i 's#penservice#/d' $MODPATH/service.sh
+sed -i '/#penservice#/d' $MODPATH/service.sh
 
 # Force Apply Widevine L3 for DRM Playback
 if [ ! -z "${widevine_choice}" ]; then
