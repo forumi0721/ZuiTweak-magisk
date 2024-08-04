@@ -1,0 +1,34 @@
+ro.stonecold.krpatch.enabled=true
+#persist.sys.lenovo.is_test_mode=true
+
+persist.sys.lenovo_setup_privacy=true
+
+gsm.product.countrycode=KR
+odm.tblenovo.countrycode=KR
+persist.sys.country=KR
+persist.sys.language=ko
+persist.sys.locale=ko-KR
+persist.sys.localevar=
+persist.sys.timezone=Asia/Seoul
+ro.boot.wificountrycode=KR
+ro.config.lgsi.countrycode=KR
+ro.product.countrycode=KR
+ro.product.locale.language=ko
+ro.product.locale.region=KR
+ro.product.locale=ko-KR
+
+ro.config.lgsi.en.market_name=Xiaoxin Pad Pro 12.7
+ro.config.lgsi.market_name=Xiaoxin Pad Pro 12.7
+ro.config.lgsi.short_market_name=Xiaoxin Pad Pro 12.7
+ro.odm.lenovo.series=Xiaoxin Pad Pro 12.7
+ro.product.display=Xiaoxin Pad Pro 12.7
+ro.product.en.display=Xiaoxin Pad Pro 12.7
+ro.vendor.config.lgsi.en.market_name=Xiaoxin Pad Pro 12.7
+ro.vendor.config.lgsi.market_name=Xiaoxin Pad Pro 12.7
+ro.vendor.config.lgsi.short_market_name=Xiaoxin Pad Pro 12.7
+ro.zuk.product.market=Xiaoxin Pad Pro 12.7
+
+ro.config.lgsi.btpen.name.prc=Lenovo Stylus
+ro.config.lgsi.btpen.name.prc_com=Lenovo Stylus Pen Pro
+ro.vendor.config.lgsi.btpen.name.prc=Lenovo Stylus
+ro.vendor.config.lgsi.btpen.name.prc_com=Lenovo Stylus Pen Pro

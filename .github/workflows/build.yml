@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get project name
+        id: get_project_name
+        run: |
+          PROJECT_NAME=$(basename $GITHUB_REPOSITORY)
+          echo "PROJECT_NAME=$PROJECT_NAME" | tee -a $GITHUB_ENV
+
+      - name: Get short revision
+        id: get_revision
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "SHORT_SHA=$SHORT_SHA" | tee -a $GITHUB_ENV
+
+      - name: Create target directory
+        run: mkdir ziptarget
+
+      - name: Move project files to target directory
+        run: |
+          shopt -s extglob dotglob
+          find . -maxdepth 1 ! -name .git ! -name .github ! -name .gitignore ! -name .gitattributes ! -name ziptarget ! -name . -exec mv {} ziptarget/ \;
+
+      - name: Upload debug ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PROJECT_NAME }}-debug-${{ env.SHORT_SHA }}
+          path: ziptarget
+

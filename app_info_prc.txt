@@ -1,0 +1,143 @@
+## 삭제 대상 앱
+
+### basic - Preinstall Apps (Preinstall에 있는 사전 설치앱)
+cn.wps.moffice_eng,/system/preinstall/Moffice_196/Moffice_196.apk,WPS Office
+com.baidu.netdisk,/system/preinstall/BaiduNetdisk/BaiduNetdisk.apk,百度网盘 (바이두 클라우드 스토리지)
+com.lenovo.club.app,/system/preinstall/LenovoSmartBuy_lenovopad/LenovoSmartBuy_lenovopad.apk,LenovoSmartBuy
+com.lenovo.hyperengine,/system/preinstall/HyperEngine/HyperEngine.apk,Quick Apps Engine Plugin
+com.lenovo.menu_assistant,/system/preinstall/LeVoiceAccessbility/LeVoiceAccessbility.apk,LeVoice
+com.newskyer.draw,/system/preinstall/Touchnotes_HD/Touchnotes_HD.apk,touchnotes
+com.qiyi.video.pad,/system/preinstall/iqiyi/iqiyi.apk,爱奇艺Pad (iQiyi 태블릿)
+com.sina.weibo,/system/preinstall/Weibo_HDwm/Weibo_HDwm.apk,Weibo
+com.smile.gifmaker,/system/preinstall/kwai_HD/kwai_HD.apk,快手 (콰이쇼우)
+com.sohu.inputmethod.sogou.oem,/system/preinstall/SogouInput/SogouInput.apk,搜狗输入法联想版 (Sogou 입력기 Lenovo 버전)
+com.tencent.qqmusic,/system/preinstall/QQMusic/QQMusic.apk,QQ音乐 (QQ 음악)
+com.zui.calculator,/system/preinstall/XuiCalculator/XuiCalculator.apk,Calculator
+com.zui.calendar,/system/preinstall/XuiCalendar/XuiCalendar.apk,Calendar
+com.zui.calendar.overlay.avengers,/system/preinstall/XuiCalendarOverlayavengers/XuiCalendarOverlayavengers.apk,com.zui.calendar.overlay.avengers
+com.zui.calendar.overlay.blue,/system/preinstall/XuiCalendarOverlayblue/XuiCalendarOverlayblue.apk,com.zui.calendar.overlay.blue
+com.zui.calendar.overlay.golden,/system/preinstall/XuiCalendarOverlaygolden/XuiCalendarOverlaygolden.apk,com.zui.calendar.overlay.golden
+com.zui.calendar.overlay.grace,/system/preinstall/XuiCalendarOverlaygrace/XuiCalendarOverlaygrace.apk,com.zui.calendar.overlay.grace
+com.zui.calendar.overlay.mains,/system/preinstall/XuiCalendarOverlaylime/XuiCalendarOverlaylime.apk,com.zui.calendar.overlay.mains
+com.zui.calendar.overlay.mostbeautiful,/system/preinstall/XuiCalendarOverlaymostbeautiful/XuiCalendarOverlaymostbeautiful.apk,com.zui.calendar.overlay.mostbeautiful
+com.zui.calendar.overlay.paintingr,/system/preinstall/XuiCalendarOverlaypaintingr/XuiCalendarOverlaypaintingr.apk,com.zui.calendar.overlay.paintingr
+com.zui.calendar.overlay.pink,/system/preinstall/XuiCalendarOverlaypink/XuiCalendarOverlaypink.apk,com.zui.calendar.overlay.pink
+com.zui.calendar.overlay.superhero,/system/preinstall/XuiCalendarOverlaysuperhero/XuiCalendarOverlaysuperhero.apk,com.zui.calendar.overlay.superhero
+com.zui.recorder,/system/preinstall/XuiRecorder/XuiRecorder.apk,레코딩
+com.zui.weather,/system/preinstall/ZuiWeather/ZuiWeather.apk,날씨
+io.moreless.tide,/system/preinstall/Tide/Tide.apk,TIDE
+net.huanci.hsjpro,/system/preinstall/HSJPRO/HSJPRO.apk,画世界Pro (Drawing World Pro)
+
+### basic - Launcher Visible System Apps (Launcher에 보이는 시스템 앱)
+com.lenovo.browser.hd,/system/priv-app/ZuiBrowser,联想浏览器HD (Lenovo 브라우저 HD)
+com.lenovo.leos.appstore,/system/priv-app/LenovoStore,App Center
+com.lenovo.leos.cloud.sync,/system/priv-app/XuiEasySync,LeCloud
+com.zui.clone,/system/priv-app/ZuiClone,Lenovo Clone
+com.zui.contacts,/system/priv-app/ZuiContacts,Contacts
+com.zui.filemanager,/system/app/ZuiFileManager,LeFile
+com.zui.gallery,/system/priv-app/ZuiGallery/ZuiGallery.apk,Gallery
+com.zui.notes,/system/priv-app/ZuiNotes,Notepad (메모장)
+
+### basic - Disable-able System Apps (Disable 가능한 시스템앱)
+com.baidu.map.location,/system/priv-app/BaiduNetworkLocation/BaiduNetworkLocation.apk,NetworkLocation
+com.google.android.partnersetup,/product/priv-app/GooglePartnerSetup/GooglePartnerSetup.apk,Google Partner Setup
+com.lenovo.lfh.tianjiao.tablet,/system/priv-app/LFHTianjiaoTablet,天骄学堂 (천교 학당)
+com.lenovo.udcplatform,/system/priv-app/UDCplatform,Lenovo Universal Device Client
+com.zui.xlog,/system/priv-app/ZuiXlog,Xlog
+
+### basic - Removable System Apps (지워도 될만한 시스템앱)
+com.tblenovo.center,/system/priv-app/TabletVantage,Lenovo Vantage
+com.zui.deskclock,/system/app/ZuiAlarm,Clock
+com.zui.deskclock.overlay.avengers,/product/overlay/ZuiAlarmOverlayavengers.apk,com.zui.deskclock.overlay.avengers
+com.zui.deskclock.overlay.blue,/product/overlay/ZuiAlarmOverlayblue.apk,com.zui.deskclock.overlay.blue
+com.zui.deskclock.overlay.golden,/product/overlay/ZuiAlarmOverlaygolden.apk,com.zui.deskclock.overlay.golden
+com.zui.deskclock.overlay.grace,/product/overlay/ZuiAlarmOverlaygrace.apk,com.zui.deskclock.overlay.grace
+com.zui.deskclock.overlay.lime,/product/overlay/ZuiAlarmOverlaylime.apk,com.zui.deskclock.overlay.lime
+com.zui.deskclock.overlay.mostbeautiful,/product/overlay/ZuiAlarmOverlaymostbeautiful.apk,com.zui.deskclock.overlay.mostbeautiful
+com.zui.deskclock.overlay.paintingr,/product/overlay/ZuiAlarmOverlaypaintingr.apk,com.zui.deskclock.overlay.paintingr
+com.zui.deskclock.overlay.pink,/product/overlay/ZuiAlarmOverlaypink.apk,com.zui.deskclock.overlay.pink
+com.zui.deskclock.overlay.superhero,/product/overlay/ZuiAlarmOverlaysuperhero.apk,com.zui.deskclock.overlay.superhero
+
+
+### advance - Additional Removable Apps (추가 제거 대상 앱)
+android.autoinstalls.config.Lenovo.tablet,/system/app/LenovoPAI/LenovoPAI.apk,Lenovo_PAI
+com.lenovo.hec.lenovoextend,/system/priv-app/Freestyle/Freestyle.apk,Lenovo Freestyle
+com.lenovo.hecplatform.hecagent,/system/app/HEC_agent/HEC_agent.apk,HECAgent
+com.lenovo.lsf,/system/priv-app/LenovoID/LenovoID.apk,联想账号 (Lenovo 계정)
+com.lenovo.lsf.device,/system/priv-app/LSF-Device-Phone/LSF-Device-Phone.apk,장치 서비스
+com.lenovo.tbengine,/system/priv-app/UDSEngine,UDS real time engine
+com.lenovo.weathercenter,/system/priv-app/WeatherCenter/WeatherCenter.apk,날씨서비스
+com.motorola.readyforsignature.app,/system/priv-app/ReadyForSignatureApp/ReadyForSignatureApp.apk,ReadyForSignatureApp
+com.tblenovo.tabpushout,/system/priv-app/TabletPushOut/TabletPushOut.apk,장치 서비스 지원
+com.zui.davdroid,/system/priv-app/ZuiContactsDAV/ZuiContactsDAV.apk,ContactsDAV
+com.zui.engine,/system/priv-app/ZuiServiceEngine/ZuiServiceEngine.apk,Study assistant
+com.zui.homesettings,/system/priv-app/ZuiHomeSettings/ZuiHomeSettings.apk,HomeSettings
+com.zui.launchersdk,/system/priv-app/ZuiLauncherSDK/ZuiLauncherSDK.apk,The left one screen
+com.zui.udevice,/system/priv-app/ZuiUDevice/ZuiUDevice.apk,스마트 액세서리
+com.zui.wallpapercropper,/system/priv-app/ZuiGalleryWallpaperCropper/ZuiGalleryWallpaperCropper.apk,Crop wallpaper
+com.zui.wallpapersetting,/system/priv-app/ZuiWallpaperSetting/ZuiWallpaperSetting.apk,배경화면
+
+### advance - Personal Opinion (개인적인 생각)
+com.lenovo.levoice.caption,/system/priv-app/LeVoiceCaptionApp,AI实时字幕 (AI 실시간 자막)
+
+
+
+## 비활성화 가능한 모든 목록
+android.autoinstalls.config.Lenovo.tablet,/system/app/LenovoPAI/LenovoPAI.apk,Lenovo_PAI
+com.android.apps.tag,/system/priv-app/Tag/Tag.apk,Tags
+com.android.bluetoothmidiservice,/system/app/BluetoothMidiService/BluetoothMidiService.apk,Bluetooth MIDI Service
+com.android.calllogbackup,/system/priv-app/CallLogBackup/CallLogBackup.apk,Call Log Backup/Restore
+com.android.cts.ctsshim,/system/app/CtsShimPrebuilt/CtsShimPrebuilt.apk,com.android.cts.ctsshim
+com.android.cts.priv.ctsshim,/system/priv-app/CtsShimPrivPrebuilt/CtsShimPrivPrebuilt.apk,com.andrid.cts.priv.ctsshim
+com.android.dreams.basic,/system/app/BasicDreams/BasicDreams.apk,Basic Daydreams
+com.android.htmlviewer,/system/app/HTMLViewer/HTMLViewer.apk,HTML Viewer
+com.android.imsserviceentitlement,/product/priv-app/ImsServiceEntitlement/ImsServiceEntitlement.apk,com.android.imsserviceentitlement
+com.android.inputmethod.latin,/product/app/LatinIME/LatinIME.apk,Android 키보드(AOSP)
+com.android.modulemetadata,/product/app/ModuleMetadata/ModuleMetadata.apk,Module Metadata
+com.android.mtp,/system/priv-app/MtpService/MtpService.apk,MTP Host
+com.android.music,/product/app/Music/Music.apk,Android Open Source Music Player
+com.android.musicfx,/system/priv-app/MusicFX/MusicFX.apk,Music FX
+com.android.providers.blockednumber,/system/priv-app/BlockedNumberProvider/BlockedNumberProvider.apk,Blocked Numbers Storage
+com.android.providers.calendar,/system/priv-app/CalendarProvider/CalendarProvider.apk,Calendar Storage
+com.android.providers.contacts,/system/priv-app/ZuiContactsProvider/ZuiContactsProvider.apk,연락처 저상소
+com.android.providers.downloads,/system/priv-app/DownloadProvider/DownloadProvider.apk,Download Manager
+com.android.providers.downloads.ui,/system/priv-app/DownloadProviderUi/DownloadProviderUi.apk,Downloads
+com.android.providers.media,/system/priv-app/MediaProviderLegacy/MediaProviderLegacy.apk,com.android.proviers.media
+com.android.remoteprovisioner,/system_ext/priv-app/RemoteProvisioner/RemoteProvisioner.apk,RemoteProvisioner
+com.android.smspush,/system_ext/app/WAPPushManager/WAPPushManager.apk,com.android.smspush
+com.android.soundpicker,/system/priv-app/ZuiSoundPicker/ZuiSoundPicker.apk,Sounds
+com.android.wallpaper.livepicker,/system/priv-app/LiveWallpapersPicker/LiveWallpapersPicker.apk,Live Wallpaper Picker
+com.baidu.map.location,/system/priv-app/BaiduNetworkLocation/BaiduNetworkLocation.apk,NetworkLocation
+com.google.android.configupdater,/product/priv-app/ConfigUpdater/ConfigUpdater.apk,ConfigUpdater
+com.google.android.marvin.talkback,/product/app/talkback/talkback.apk,Android 접근성 도구 모음
+com.google.android.onetimeinitializer,/product/priv-app/GoogleOneTimeInitializer/GoogleOneTimeInitializer.apk,Google One Time Init
+com.google.android.partnersetup,/product/priv-app/GooglePartnerSetup/GooglePartnerSetup.apk,Google Partner Setup
+com.google.android.printservice.recommendation,/system/app/GooglePrintRecommendationService/GooglePrintRecommendationService.apk,Print Service Recoomendation Service
+com.google.android.webview,/product/app/WebViewGoogle/WebViewGoogle.apk,Android System WebView
+com.lenovo.browser.hd,/system/priv-app/ZuiBrowser,联想浏览器HD (Lenovo 브라우저 HD)
+com.lenovo.hec.lenovoextend,/system/priv-app/Freestyle/Freestyle.apk,Lenovo Freestyle
+com.lenovo.hecplatform.hecagent,/system/app/HEC_agent/HEC_agent.apk,HECAgent
+com.lenovo.leos.appstore,/system/priv-app/LenovoStore,App Center
+com.lenovo.leos.cloud.sync,/system/priv-app/XuiEasySync,LeCloud
+com.lenovo.lfh.tianjiao.tablet,/system/priv-app/LFHTianjiaoTablet,天骄学堂 (천교 학당)
+com.lenovo.lsf,/system/priv-app/LenovoID/LenovoID.apk,联想账号 (Lenovo 계정)
+com.lenovo.lsf.device,/system/priv-app/LSF-Device-Phone/LSF-Device-Phone.apk,장치 서비스
+com.lenovo.tbengine,/system/priv-app/UDSEngine,UDS real time engine
+com.lenovo.udcplatform,/system/priv-app/UDCplatform,Lenovo Universal Device Client
+com.lenovo.weathercenter,/system/priv-app/WeatherCenter/WeatherCenter.apk,날씨서비스
+com.motorola.readyforsignature.app,/system/priv-app/ReadyForSignatureApp/ReadyForSignatureApp.apk,ReadyForSignatureApp
+com.qualcomm.qti.gpudrivers.kona.api30,/vendor/app/com.qualcomm.qti.gpudrivers.kona.api30/com.qualcomm.qti.gpudrivers.kona.api30.apk,Adreno Graphics Drivers
+com.quicinc.voice.activation,/system_ext/priv-app/QualcommVoiceActivation/QualcommVoiceActivation.apk,Qualcomm Voice Assist
+com.tblenovo.tabpushout,/system/priv-app/TabletPushOut/TabletPushOut.apk,장치 서비스 지원
+com.zui.clone,/system/priv-app/ZuiClone,Lenovo Clone
+com.zui.contacts,/system/priv-app/ZuiContacts,Contacts
+com.zui.davdroid,/system/priv-app/ZuiContactsDAV/ZuiContactsDAV.apk,ContactsDAV
+com.zui.engine,/system/priv-app/ZuiServiceEngine/ZuiServiceEngine.apk,Study assistant
+com.zui.filemanager,/system/app/ZuiFileManager,LeFile
+com.zui.gallery,/system/priv-app/ZuiGallery/ZuiGallery.apk,Gallery
+com.zui.homesettings,/system/priv-app/ZuiHomeSettings/ZuiHomeSettings.apk,HomeSettings
+com.zui.launchersdk,/system/priv-app/ZuiLauncherSDK/ZuiLauncherSDK.apk,The left one screen
+com.zui.notes,/system/priv-app/ZuiNotes,Notepad (메모장)
+com.zui.udevice,/system/priv-app/ZuiUDevice/ZuiUDevice.apk,스마트 액세서리
+com.zui.wallpapercropper,/system/priv-app/ZuiGalleryWallpaperCropper/ZuiGalleryWallpaperCropper.apk,Crop wallpaper
+com.zui.wallpapersetting,/system/priv-app/ZuiWallpaperSetting/ZuiWallpaperSetting.apk,배경화면
