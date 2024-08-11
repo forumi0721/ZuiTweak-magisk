@@ -11,6 +11,7 @@
    - RRO(Resource Runtime Overlay)를 이용한 다국어 처리 방식으로 구현합니다.
 3. **Play Store 활성화:** Google Play 스토어를 활성화합니다.
 4. **불필요한 앱/중국 앱 삭제:** 기본적으로 설치된 불필요한 앱 및 중국 앱을 삭제합니다.
+5. **Pen(Stylus) 서비스 활성화:** 펜 페어링 없이 AP500U 사용을 위해 펜 서비스 기능을 활성화합니다.
 
 ### Lenovo Y700 2023
 1. **Multiple Space 활성화:** 복제 공간(분신 공간) 기능을 활성화 합니다.
@@ -18,9 +19,8 @@
 2. **불필요한 앱:** 기본적으로 설치된 불필요한 앱을 삭제합니다.
 
 ### 공통
-1. **Pen(Stylus) 서비스 활성화:** 펜 페어링 없이 펜 기능을 활성화합니다.
-2. **DRM 컨텐츠 재생을 위한 Widevine L3 강제 적용:** Widevine L3를 강제 적용하여 DRM 콘텐츠를 재생할 수 있게 합니다.
-3. **Bootanimation 교체:** 부팅 애니메이션을 교체합니다.
+1. **DRM 컨텐츠 재생을 위한 Widevine L3 강제 적용:** Widevine L3를 강제 적용하여 DRM 콘텐츠를 재생할 수 있게 합니다.
+2. **Bootanimation 교체:** 부팅 애니메이션을 교체합니다.
 
 ## 소스 코드
 소스 코드는 GitHub에서 확인할 수 있습니다: [ZuiTweak-magisk 소스 코드](https://github.com/forumi0721/ZuiTweak-magisk)

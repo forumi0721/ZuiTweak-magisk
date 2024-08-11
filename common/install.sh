@@ -2,6 +2,7 @@
 ui_print "==> Device Compatibility Check"
 model="$(getprop ro.product.model | tr '[:lower:]' '[:upper:]')"
 region="$(getprop ro.config.lgsi.region | tr '[:lower:]' '[:upper:]')"
+version=$(getprop ro.com.zui.version)
 fingerprint=$(getprop ro.build.fingerprint)
 debloat=$(getprop ro.stonecold.debloat.enabled)
 if [ "${model}" != "TB320FC" -a "${model}" != "TB371FC" ]; then
@@ -16,6 +17,7 @@ if [ "${model}" = "TB371FC" -a "${fingerprint}" != "Lenovo/TB371FC_PRC/TB371FC:1
 fi
 ui_print "Device model : ${model}"
 ui_print "Device region : ${region}"
+ui_print "Device version : ${version}"
 ui_print "Device fingerprint : ${fingerprint}"
 ui_print "Device compatibility check passed."
 ui_print ""
@@ -180,7 +182,24 @@ if [ "${model}" = "TB371FC" ]; then
     ui_print ""
 fi
 
-if [ "${model}" = "TB320FC" -a "${region}" = "ROW" ]; then
+if [ "${model}" = "TB371FC" ]; then
+    # Pen Service Activation
+    STEP=$((STEP + 1))
+    ui_print "==> Step ${STEP}: Pen Service Activation"
+    ui_print " Activates Pen Service."
+    ui_print " AP500U 사용을 위해 펜 서비스를 활성화합니다."
+    ui_print "Do you want to activate Pen Service?"
+    ui_print " - Vol Up   = Yes"
+    ui_print " - Vol Down = No"
+    if chooseport; then
+        pen_service_choice="Y"
+    else
+        pen_service_choice="N"
+    fi
+    ui_print ""
+fi
+
+if [ "${model}" = "TB320FC" -a "${region}" = "ROW" ] && [ "${version}" = "15.0" -o "${fingerprint}" = "Lenovo/TB320FC/TB320FC:14/UKQ1.231025.001/ZUI_16.0.324_240718_ROW:user/release-keys" ]; then
     # Multiple Space Activation
     STEP=$((STEP + 1))
     ui_print "==> Step ${STEP}: Multiple Space Activation"
@@ -196,21 +215,6 @@ if [ "${model}" = "TB320FC" -a "${region}" = "ROW" ]; then
     fi
     ui_print ""
 fi
-
-# Pen Service Activation
-STEP=$((STEP + 1))
-ui_print "==> Step ${STEP}: Pen Service Activation"
-ui_print " Activates Pen Service."
-ui_print " 펜(Stylus) 서비스를 활성화합니다."
-ui_print "Do you want to activate Pen Service?"
-ui_print " - Vol Up   = Yes"
-ui_print " - Vol Down = No"
-if chooseport; then
-    pen_service_choice="Y"
-else
-    pen_service_choice="N"
-fi
-ui_print ""
 
 # Force Apply Widevine L3 for DRM Playback
 STEP=$((STEP + 1))
@@ -297,7 +301,7 @@ STEP=0
 if [ ! -z "${korean_patch_choice}" ]; then
     STEP=$((STEP + 1))
     ui_print "==> Step ${STEP}: Korean Patch Installation"
-    if [ "${korean_patch_choice}" == "Y" ]; then
+    if [ "${korean_patch_choice}" = "Y" ]; then
         ui_print "Installing Korean Patch..."
         ui_print " - system.prop"
         cat $MODPATH/common/files/stonecold-kr/system.prop >> $MODPATH/system.prop
@@ -335,7 +339,7 @@ sed -i '/#locale#/d' $MODPATH/service.sh
 STEP=$((STEP + 1))
 if [ ! -z "${google_play_choice}" ]; then
     ui_print "==> Step ${STEP}: Google Play Activation"
-    if [ "${google_play_choice}" == "Y" ]; then
+    if [ "${google_play_choice}" = "Y" ]; then
         ui_print "Activating Google Play..."
         #pm list packages -d | grep -E 'com.google.android.gsf|com.android.vending|com.google.android.partnersetup|com.google.android.printservice.recommendation|com.google.android.ext.shared|com.google.android.onetimeinitializer|com.google.android.configupdater|com.google.android.gms|com.android.vending' | sed -e 's/^.*package://g' | while read -r pkg
         pm list packages -d | grep -E 'com.google.android.gsf|com.android.vending|com.google.android.printservice.recommendation|com.google.android.ext.shared|com.google.android.onetimeinitializer|com.google.android.configupdater|com.google.android.gms|com.android.vending' | sed -e 's/^.*package://g' | while read -r pkg
@@ -393,7 +397,7 @@ fi
 if [ ! -z "${prc_apps_debloat_choice}" ]; then
     STEP=$((STEP + 1))
     ui_print "==> Step ${STEP}: Disable/Uninstall Chinese Apps"
-    if [ "${prc_apps_debloat_choice}" == "Y" ]; then
+    if [ "${prc_apps_debloat_choice}" = "Y" ]; then
         #User Packages (visible)
         ui_print "Disabling/Uninstalling Chinese Apps..."
         ui_print " - system.prop"
@@ -438,7 +442,7 @@ if [ ! -z "${prc_apps_debloat_choice}" ]; then
             pm disable-user --user 0 ${pkg}
         done
 
-        if [ "${prc_apps_debloat_all_choice}" == "Y" ]; then
+        if [ "${prc_apps_debloat_all_choice}" = "Y" ]; then
             #System Packages
             #com.zui.wallpapercropper,/system/priv-app/ZuiGalleryWallpaperCropper/ZuiGalleryWallpaperCropper.apk - 배경화면 설정을 위해 필요
             #com.zui.wallpapersetting,/system/priv-app/ZuiWallpaperSetting/ZuiWallpaperSetting.apk - 개인 사용자 지정 사용을 위해 필요
@@ -485,12 +489,12 @@ fi
 if [ ! -z "${row_apps_debloat_choice}" ]; then
     STEP=$((STEP + 1))
     ui_print "==> Step ${STEP}: Disable/Uninstall Unused Apps"
-    if [ "${row_apps_debloat_choice}" == "Y" ]; then
+    if [ "${row_apps_debloat_choice}" = "Y" ]; then
         #User Packages (visible)
         ui_print "Disabling/Uninstalling Unused Apps..."
         ui_print " - system.prop"
         cat $MODPATH/common/files/stonecold-debloat/system.prop >> $MODPATH/system.prop
-        pm list packages -3 | grep -E 'com.google.android.apps.books|com.myscript.nebo.lenovo|com.myscript.calculator.lenovo|com.zui.weather|com.google.android.play.games|com.zui.recorder|cn.wps.moffice_eng|com.google.android.apps.youtube.kids' | sed -e 's/^.*package://g' | while read -r pkg
+        pm list packages -3 | grep -E 'com.google.android.apps.books|com.myscript.nebo.lenovo|com.myscript.calculator.lenovo|com.zui.weather|com.google.android.play.games|com.zui.recorder|cn.wps.moffice_eng|com.google.android.apps.youtube.kids|io.moreless.tide' | sed -e 's/^.*package://g' | while read -r pkg
         do
             ui_print " - ${pkg} (preinstall)"
             pm uninstall ${pkg}
@@ -517,8 +521,8 @@ if [ ! -z "${row_apps_debloat_choice}" ]; then
             pm disable-user --user 0 ${pkg}
         done
 
-        if [ "${row_apps_debloat_all_choice}" == "Y" ]; then
-            for pkg_path in com.lenovo.weathercenter,/system/priv-app/WeatherCenter/WeatherCenter.apk com.google.android.gm,/product/app/Gmail2/Gmail2.apk com.google.android.apps.maps,/product/app/Maps/Maps.apk com.google.android.apps.docs,/product/app/Drive/Drive.apk com.google.android.apps.kids.home,/product/priv-app/GoogleKidsSpace/GoogleKidsSpace.apk com.google.android.apps.nbu.files,/product/priv-app/FilesGoogle/FilesGoogle.apk com.google.android.videos,/product/app/Videos/Videos.apk com.google.android.apps.tachyon,/product/app/Meet/Meet.apk com.google.android.apps.mediahome.launcher,/product/priv-app/EntertainmentSpace/EntertainmentSpace.apk com.google.android.calendar,/product/app/CalendarGoogle/CalendarGoogle.apk com.google.android.feedback,/system_ext/priv-app/GoogleFeedback/GoogleFeedback.apk com.google.android.apps.safetyhub,/product/priv-app/PersonalSafety/PersonalSafety.apk com.android.dreams.phototable,/product/app/PhotoTable/PhotoTable.apk
+        if [ "${row_apps_debloat_all_choice}" = "Y" ]; then
+            for pkg_path in com.lenovo.weathercenter,/system/priv-app/WeatherCenter/WeatherCenter.apk com.google.android.gm,/product/app/Gmail2/Gmail2.apk com.google.android.apps.maps,/product/app/Maps/Maps.apk com.google.android.apps.docs,/product/app/Drive/Drive.apk com.google.android.apps.kids.home,/product/priv-app/GoogleKidsSpace/GoogleKidsSpace.apk com.google.android.apps.nbu.files,/product/priv-app/FilesGoogle/FilesGoogle.apk com.google.android.videos,/product/app/Videos/Videos.apk com.google.android.apps.tachyon,/product/app/Meet/Meet.apk com.google.android.apps.mediahome.launcher,/product/priv-app/EntertainmentSpace/EntertainmentSpace.apk com.google.android.calendar,/product/app/CalendarGoogle/CalendarGoogle.apk com.google.android.feedback,/system_ext/priv-app/GoogleFeedback/GoogleFeedback.apk com.google.android.apps.safetyhub,/product/priv-app/PersonalSafety/PersonalSafety.apk com.android.dreams.phototable,/product/app/PhotoTable/PhotoTable.apk com.google.android.apps.youtube.kids,/product/app/YouTubeKids/YouTubeKids.apk
             do
                 pkg=${pkg_path/,*/}
                 path=${pkg_path/*,/}
@@ -550,7 +554,7 @@ fi
 if [ ! -z "${keyboard_mapping_choice}" ]; then
     STEP=$((STEP + 1))
     ui_print "==> Step ${STEP}: Keyboard Mapping Change"
-    if [ "${keyboard_mapping_choice}" == "Y" ]; then
+    if [ "${keyboard_mapping_choice}" = "Y" ]; then
         ui_print "Applying keyboard mapping change..."
         ui_print " - /system/usr/keylayout/Vendor_17ef_Product_6175.kl"
         mkdir -p ${system_path}/usr/keylayout
@@ -566,25 +570,35 @@ fi
 if [ ! -z "${multiple_space_choice}" ]; then
     STEP=$((STEP + 1))
     ui_print "==> Step ${STEP}: Multiple Space Activation"
-    if [ "${multiple_space_choice}" == "Y" ]; then
+    if [ "${multiple_space_choice}" = "Y" ]; then
         ui_print "Activating Multiple Space..."
         ui_print " - system.prop"
         cat $MODPATH/common/files/stonecold-multiplespace/system.prop >> $MODPATH/system.prop
-        mkdir -p ${product_path}/overlay
-        ui_print " - ZuiSettingsMultipleSpace.apk"
-        cp -a $MODPATH/common/files/stonecold-multiplespace/ZuiSettingsMultipleSpace.apk ${product_path}/overlay/
+        if [ "${version}" = "15.0" ]; then
+            cat $MODPATH/common/files/stonecold-multiplespace/ZUI_15.0.prop >> $MODPATH/system.prop
+            mkdir -p ${product_path}/overlay
+            ui_print " - ZuiSettingsMultipleSpace.apk"
+            cp -a $MODPATH/common/files/stonecold-multiplespace/ZuiSettingsMultipleSpace.apk ${product_path}/overlay/
+        else
+            ui_print " - framework.jar"
+            mkdir -p ${system_path}/framework
+            cp -a $MODPATH/common/files/stonecold-multiplespace/framework.jar-ZUI_16.0.324_240718_ROW ${system_path}/framework/framework.jar
+            ui_print " - post-fs-data.sh"
+            sed -i -e 's/#multispace#//g' $MODPATH/post-fs-data.sh
+        fi
         ui_print "Multiple Space activation complete."
     else
         ui_print "Multiple Space activation skipped."
     fi
     ui_print ""
 fi
+sed -i '/#multispace#/d' $MODPATH/post-fs-data.sh
 
 # Pen Service Activation
 if [ ! -z "${pen_service_choice}" ]; then
     STEP=$((STEP + 1))
     ui_print "==> Step ${STEP}: Pen Service Activation"
-    if [ "${pen_service_choice}" == "Y" ]; then
+    if [ "${pen_service_choice}" = "Y" ]; then
         ui_print "Activating Pen Service..."
         ui_print " - system.prop"
         cat $MODPATH/common/files/stonecold-penservice/system.prop >> $MODPATH/system.prop
@@ -602,7 +616,7 @@ sed -i '/#penservice#/d' $MODPATH/service.sh
 if [ ! -z "${widevine_choice}" ]; then
     STEP=$((STEP + 1))
     ui_print "==> Step ${STEP}: Force Apply Widevine L3 for DRM Playback"
-    if [ "${widevine_choice}" == "Y" ]; then
+    if [ "${widevine_choice}" = "Y" ]; then
         ui_print "Applying Widevine L3..."
         if [ -e /vendor/lib/liboemcrypto.so -o -e /system/vendor/lib/liboemcrypto.so ]; then
             ui_print " - /vendor/lib/liboemcrypto.so"
@@ -625,7 +639,7 @@ fi
 if [ ! -z "${bootanimation_choice}" ]; then
     STEP=$((STEP + 1))
     ui_print "==> Step ${STEP}: Bootanimation Replacement"
-    if [ "${bootanimation_choice}" == "Y" ]; then
+    if [ "${bootanimation_choice}" = "Y" ]; then
         ui_print "Switching to new bootanimation..."
         ui_print " - /product/media/bootanimation.zip"
         mkdir -p ${product_path}/media
@@ -643,9 +657,12 @@ ui_print "==> Finalization Step"
 ui_print "Finalizing the setup..."
 rm -rf $MODPATH/zygisk $MODPATH/Makefile $MODPATH/update.json
 chmod 755 $MODPATH/*.sh
-if [ "${korean_patch_choice}" == "Y" ]; then
+if [ "${korean_patch_choice}" = "Y" ]; then
     settings put system system_locales 'ko-KR'
     settings put global device_name "Xiaoxin Pad Pro 12.7"
+    rm -rf /data/dalvik-cache/arm64/system@framework@*
+fi
+if [ "${multiple_space_choice}" = "Y" ]; then
     rm -rf /data/dalvik-cache/arm64/system@framework@*
 fi
 if [ "${debloat}" = "true" ]; then
