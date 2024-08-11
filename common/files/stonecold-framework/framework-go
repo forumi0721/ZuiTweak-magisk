@@ -1,0 +1,585 @@
+#!/bin/sh
+
+local_debug=N
+TMP="/data/local/tmp/framework-patch"
+stock_framework="/system/framework/framework.jar"
+classes_dex="${TMP}/classes.dex"
+
+#for local debug
+if [ ! -z "${ANDROID_ROOT}" ]; then
+	. ${TMP}/func.sh
+	chmod 755 "${TMP}/aapt"
+	chmod 755 "${TMP}/zip"
+	chmod 755 "${TMP}/zipalign"
+
+	alias zip="${TMP}/zip"
+	alias zipalign="${TMP}/zipalign"
+else
+	local_debug=Y
+	TMP="$(pwd)"
+	stock_framework="${TMP}/framework.jar"
+	classes_dex="${TMP}/classes.dex"
+	API=31
+	alias sed=gsed
+	alias zipalign=$(ls /Volumes/Data/Users/forumi0721/Library/Android/sdk/build-tools/* -d | sort -V | tail -1)/zipalign
+	ui_print() {
+		echo "${1}"
+	}
+
+	abort() {
+		echo "${1}"
+		exit 1
+	}
+fi
+
+
+decompile() {
+	ui_print "==> Decompile"
+
+	rm -rf ${TMP}/framework
+	apktool d ${stock_framework} -api $API -f --output ${TMP}/framework
+
+	ui_print "==> Done"
+	ui_print ""
+}
+
+locale_patch() {
+	ui_print "==> Locale Patch (Configuration.smali)"
+
+	configuration_file="$(find "${TMP}/framework" -type f -name "Configuration.smali")"
+	if [ -z "${configuration_file}" -o ! -e "${configuration_file}" ]; then
+		ui_print " -> Cannot found Configuration.smali"
+		ui_print ""
+		return 1
+	fi
+	configuration_dex="$(echo "${configuration_file}" | sed "s#${TMP}/framework/smali_\(classes[0-9]*\)/.*#\1.dex#g")" ; [ "${configuration_dex}" = "${configuration_file}" ] && configuration_dex=classes.dex
+	configuration_method=".method .*setLocales"
+
+	if (! grep -wlq "$configuration_file" -e "$configuration_method"); then
+		ui_print " -> setLocales method not found in Configuration.smali"
+		ui_print ""
+		return 1
+	fi
+
+	configuration_file_org="${configuration_file}"
+	configuration_file="${TMP}/$(basename "${configuration_file}")"
+
+	rm -rf "${configuration_file}"
+	cp "${configuration_file_org}" "${configuration_file}"
+
+	configuration_line="$(grep -w "${configuration_file}" -e "${configuration_method}")"
+	configuration_line_start="$(sed -n "/${configuration_method}/=" "${configuration_file}")"
+	configuration_line_end="$(sed -n "/${configuration_method}/,\$p" "${configuration_file}" | sed -n '/.end method/=' | head -1)" ; configuration_line_end=$((configuration_line_start + configuration_line_end))
+	configuration_method_code="$(sed -n "${configuration_line_start},${configuration_line_end}p" "${configuration_file}")"
+
+	if [ ! -z "$(echo "${configuration_method_code}" | grep 'ro.stonecold.krpatch.enabled')" ]; then
+		ui_print " -> Already patched"
+		ui_print ""
+		return 1
+	fi
+
+	configuration_method_code_new="$(echo "${configuration_method_code}" | sed -e 's/persist.sys.lenovo.is_test_mode/ro.stonecold.krpatch.enabled/g')"
+	sed "${configuration_line_start},${configuration_line_end}c\\
+$(echo "${configuration_method_code_new}" | sed -e 's/$/\\n\\/g')\
+" ${configuration_file} | sed -e 's/\\n\\$//g' -e 's/.end method[ ]*\\n/.end method\n/g' > "${configuration_file}.patch"
+
+	rm -rf "${configuration_file}"
+	mv "${configuration_file}.patch" "${configuration_file}"
+
+	rm -rf "${configuration_file_org}"
+	cp "${configuration_file}" "${configuration_file_org}"
+
+	ui_print "==> Done"
+	ui_print ""
+
+	return 0
+}
+
+multispace_patch() {
+	ui_print "==> Multispace Patch (LgsiFeatures.smali)"
+
+	lgsi_features_file="$(find "${TMP}/framework" -type f -name "LgsiFeatures.smali")"
+	if [ -z "${lgsi_features_file}" -o ! -e "${lgsi_features_file}" ]; then
+		ui_print " -> Cannot found LgsiFeatures.smali"
+		ui_print ""
+		return 1
+	fi
+	lgsi_features_dex="$(echo "${lgsi_features_file}" | sed "s#${TMP}/framework/smali_\(classes[0-9]*\)/.*#\1.dex#g")" ; [ "${lgsi_features_dex}" = "${lgsi_features_file}" ] && lgsi_features_dex=classes.dex
+	lgsi_features_method=".method static constructor"
+
+	if (! grep -wlq "$lgsi_features_file" -e "$lgsi_features_method"); then
+		ui_print " -> static constructor method not found in LgsiFeatures.smali"
+		ui_print ""
+		return 1
+	fi
+
+	lgsi_features_file_org="${lgsi_features_file}"
+	lgsi_features_file="${TMP}/$(basename "${lgsi_features_file}")"
+
+	rm -rf "${lgsi_features_file}"
+	cp "${lgsi_features_file_org}" "${lgsi_features_file}"
+
+	lgsi_features_line="$(grep -w "${lgsi_features_file}" -e "${lgsi_features_method}")"
+	lgsi_features_line_start="$(sed -n "/${lgsi_features_method}/=" "${lgsi_features_file}")"
+	lgsi_features_line_end="$(sed -n "/${lgsi_features_method}/,\$p" "${lgsi_features_file}" | sed -n '/.end method/=' | head -1)" ; lgsi_features_line_end=$((lgsi_features_line_start + lgsi_features_line_end))
+	lgsi_features_method_code="$(sed -n "${lgsi_features_line_start},${lgsi_features_line_end}p" "${lgsi_features_file}")"
+
+	lgsi_features_false=
+	lgsi_features_true=
+	for l in $(grep -n "const/4 .*, 0x0" ${lgsi_features_file} | cut -f 1 -d ':')
+	do
+		if [ ${l} -gt ${lgsi_features_line_start} ]; then
+			lgsi_features_false="$(sed -n "${l},${l}p" ${lgsi_features_file} | sed -e 's/.*const\/4 \(.*\), 0x0/\1/g')"
+			break
+		fi
+	done
+	for l in $(grep -n "const/4 .*, 0x1" ${lgsi_features_file} | cut -f 1 -d ':')
+	do
+		if [ ${l} -gt ${lgsi_features_line_start} ]; then
+			lgsi_features_true="$(sed -n "${l},${l}p" ${lgsi_features_file} | sed -e 's/.*const\/4 \(.*\), 0x1/\1/g')"
+			break
+		fi
+	done
+
+	multispace_line="$(grep -n 'const-string .*, "MultiSpace"' ${lgsi_features_file} | cut -f 1 -d ':')"
+	multispace_method_line=$(grep -A 999 'const-string .*, "MultiSpace"' ${lgsi_features_file} | grep -n 'Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object' | head -1 | cut -f 1 -d ':') ; multispace_method_line=$((multispace_line + multispace_method_line - 1))
+	multispace_method="$(sed -n "${multispace_method_line},${multispace_method_line}p" "${lgsi_features_file}")"
+	multispace_method_new="$(echo "${multispace_method}" | sed -e "s/^\(.*\) {\(.*\), \(.*\), \(.*\)}, \(.*\);/\1 {\2, \3, ${lgsi_features_true}}, \5;/g")"
+	if [ "${multispace_method_new}" = "${multispace_method}" ]; then
+		ui_print " -> Already patched"
+		ui_print ""
+		return 1
+	fi
+
+	sed -i -e "${multispace_method_line}s@.*@${multispace_method_new}@g" ${lgsi_features_file}
+
+	rm -rf ${lgsi_features_file_org}
+	cp ${lgsi_features_file} ${lgsi_features_file_org}
+
+	ui_print "==> Done"
+	ui_print ""
+
+	return 0
+}
+
+framework_akss() {
+	ui_print "==> Framework Patch (AndroidKeyStoreSpi.smali)"
+
+	akss_file="$(find "${TMP}/framework" -type f -name "AndroidKeyStoreSpi.smali")"
+	if [ -z "${akss_file}" -o ! -e "${akss_file}" ]; then
+		ui_print " -> Cannot found AndroidKeyStoreSpi.smali"
+		ui_print ""
+		return 1
+	fi
+	akss_dex="$(echo "${akss_file}" | sed "s#${TMP}/framework/smali_\(classes[0-9]*\)/.*#\1.dex#g")" ; [ "${akss_dex}" = "${akss_file}" ] && akss_dex=classes.dex
+	akss_method="engineGetCertificateChain"
+
+	if (! grep -wlq "$akss_file" -e "$akss_method"); then
+		ui_print " -> engineGetCertificateChain method not found in AndroidKeyStoreSpi.smali"
+		ui_print ""
+		return 1
+	fi
+
+	akss_file_org="${akss_file}"
+	akss_file="${TMP}/$(basename "${akss_file}")"
+
+	rm -rf "${akss_file}"
+	cp "${akss_file_org}" "${akss_file}"
+
+	akss_line="$(grep -w "${akss_file}" -e "${akss_method}" | head -1)"
+	akss_line_start="$(sed -n "/${akss_method}/=" "${akss_file}" | head -1)"
+	akss_line_end="$(sed -n "/${akss_method}/,\$p" "${akss_file}" | sed -n '/.end method/=' | head -1)" ; akss_line_end=$((akss_line_start + akss_line_end))
+	akss_method_code="$(sed -n "${akss_line_start},${akss_line_end}p" "${akss_file}")"
+
+	if [ ! -z "$(echo "${akss_method_code}" | grep 'Lcom/android/internal/util/framework/Android;->engineGetCertificateChain(\[Ljava/security/cert/Certificate;)\[Ljava/security/cert/Certificate;')" ]; then
+		ui_print " -> Already patched"
+		ui_print ""
+		return 1
+	fi
+
+	last_aput_obj="$(echo "${akss_method_code}" | grep "aput-object" | tail -n1)"
+	last_aput_obj="$(echo "${last_aput_obj}" | sed -e 's/^[[:blank:]]*//')"
+	leaf_cert_regex='s/^[[:blank:]]*aput-object[[:blank:]].[[:digit:]]+,[[:blank:]](.[[:digit:]]+),[[:blank:]].[[:digit:]]+$/\1/p'
+	leaf_cert="$(echo "${last_aput_obj}" | sed -nE "${leaf_cert_regex}")"
+
+	if [ -z "$leaf_cert" ]; then
+		ui_print " -> Leaf certificate register not found in engineGetCertificateChain method"
+		ui_print ""
+		return 1
+	fi
+
+	akss_method_code_new="$(echo "${akss_method_code}" | sed "/${last_aput_obj}/a\\
+\n\
+    invoke-static {${leaf_cert}}, Lcom/android/internal/util/framework/Android;->engineGetCertificateChain([Ljava/security/cert/Certificate;)[Ljava/security/cert/Certificate;\n\
+\n\
+    move-result-object ${leaf_cert}") "
+	sed "${akss_line_start},${akss_line_end}c\\
+$(echo "${akss_method_code_new}" | sed -e 's/$/\\n\\/g')\
+" ${akss_file} | sed -e 's/\\n\\$//g' -e 's/.end method[ ]*\\n/.end method\n/g' > "${akss_file}.patch"
+
+	rm -rf "${akss_file}"
+	mv "${akss_file}.patch" "${akss_file}"
+
+	rm -rf "${akss_file_org}"
+	cp "${akss_file}" "${akss_file_org}"
+
+	ui_print "==> Done"
+	ui_print ""
+
+	return 0
+}
+
+framework_instrumentation() {
+	ui_print "==> Framework Patch (Instrumentation.smali)"
+
+	instrumentation_file="$(find "${TMP}/framework" -type f -name "Instrumentation.smali")"
+	if [ -z "${instrumentation_file}" -o ! -e "${instrumentation_file}" ]; then
+		ui_print " -> Cannot found Instrumentation.smali"
+		ui_print ""
+		return 1
+	fi
+	instrumentation_dex="$(echo "${instrumentation_file}" | sed "s#${TMP}/framework/smali_\(classes[0-9]*\)/.*#\1.dex#g")" ; [ "${instrumentation_dex}" = "${instrumentation_file}" ] && instrumentation_dex=classes.dex
+	i_static_method="public static whitelist.*newApplication"
+	i_method="public whitelist.*newApplication"
+
+	if (! grep -wlq "${instrumentation_file}" -e "${i_static_method}") && (! grep -wlq "${instrumentation_file}" -e "${i_method}"); then
+		i_static_method="public static newApplication"
+		i_method="public newApplication"
+		if (! grep -wlq "${instrumentation_file}" -e "${i_static_method}") && (! grep -wlq "${instrumentation_file}" -e "${i_method}"); then
+			ui_print " -> newApplication method not in Instrumentation.smali"
+			ui_print ""
+			return 1
+		fi
+	fi
+
+	instrumentation_file_org="${instrumentation_file}"
+	instrumentation_file="${TMP}/$(basename "${instrumentation_file}")"
+
+	rm -rf "${instrumentation_file}"
+	cp "${instrumentation_file_org}" "${instrumentation_file}"
+
+	i_static_line="$(grep -w "${instrumentation_file}" -e "${i_static_method}")"
+	i_static_line_start="$(sed -n "/${i_static_method}/=" "${instrumentation_file}")"
+	i_static_line_end="$(sed -n "/${i_static_method}/,\$p" "${instrumentation_file}" | sed -n '/.end method/=' | head -1)" ; i_static_line_end=$((i_static_line_start + i_static_line_end))
+	i_static_method_code="$(sed -n "${i_static_line_start},${i_static_line_end}p" "${instrumentation_file}")"
+
+	if [ ! -z "$(echo "${i_static_method_code}" | grep 'Lcom/android/internal/util/framework/Android;->newApplication(Landroid/content/Context;)V')" ]; then
+		ui_print " -> Already patched"
+		ui_print ""
+		return 1
+	fi
+
+	i_static_return="$(echo "${i_static_method_code}" | tail -n2 | head -n1)"
+	i_static_context="$(echo "${i_static_method_code}" | grep "# Landroid/content/Context;" | sed -e 's/^[[:blank:]]*//' | cut -d',' -f1 | cut -d' ' -f2)"
+
+	if [ -z "$i_static_context" ]; then
+		ui_print "Context register not found in newApplication static method"
+		ui_print ""
+		return 1
+	fi
+
+	i_static_method_code_new="$(echo "${i_static_method_code}" | sed "/${i_static_return}/i\\
+\n\
+    invoke-static {${i_static_context}}, Lcom/android/internal/util/framework/Android;->newApplication(Landroid/content/Context;)V\n\
+")"
+	sed "${i_static_line_start},${i_static_line_end}c\\
+$(echo "${i_static_method_code_new}" | sed -e 's/$/\\n\\/g')\
+" ${instrumentation_file} | sed -e 's/\\n\\$//g' -e 's/.end method[ ]*\\n/.end method\n/g' > "${instrumentation_file}.patch"
+
+	rm -rf "${instrumentation_file}"
+	mv "${instrumentation_file}.patch" "${instrumentation_file}"
+
+	i_line="$(grep -w "${instrumentation_file}" -e "${i_method}")"
+	i_line_start="$(sed -n "/${i_method}/=" "${instrumentation_file}")"
+	i_line_end="$(sed -n "/${i_method}/,\$p" "${instrumentation_file}" | sed -n '/.end method/=' | head -1)" ; i_line_end=$((i_line_start + i_line_end))
+	i_method_code="$(sed -n "${i_line_start},${i_line_end}p" "${instrumentation_file}")"
+
+	if [ ! -z "$(echo "${i_method_code}" | grep 'Lcom/android/internal/util/framework/Android;->newApplication(Landroid/content/Context;)V')" ]; then
+		ui_print " -> Already patched"
+		ui_print ""
+		return 1
+	fi
+
+	i_return="$(echo "${i_method_code}" | tail -n2 | head -n1)"
+	i_context="$(echo "${i_method_code}" | grep "# Landroid/content/Context;" | sed -e 's/^[[:blank:]]*//' | cut -d',' -f1 | cut -d' ' -f2)"
+
+	if [ -z "$i_context" ]; then
+		ui_print " -> Context register not found in newApplication method"
+		ui_print ""
+		return 1
+	fi
+
+	i_method_code_new="$(echo "${i_method_code}" | sed "/${i_return}/i\\
+\n\
+    invoke-static {${i_context}}, Lcom/android/internal/util/framework/Android;->newApplication(Landroid/content/Context;)V\n\
+")"
+	sed "${i_line_start},${i_line_end}c\\
+$(echo "${i_method_code_new}" | sed -e 's/$/\\n\\/g')\
+" ${instrumentation_file} | sed -e 's/\\n\\$//g' -e 's/.end method[ ]*\\n/.end method\n/g' > "${instrumentation_file}.patch"
+
+	rm -rf "${instrumentation_file}"
+	mv "${instrumentation_file}.patch" "${instrumentation_file}"
+
+	rm -rf "${instrumentation_file_org}"
+	cp "${instrumentation_file}" "${instrumentation_file_org}"
+
+	ui_print "==> Done"
+	ui_print ""
+
+	return 0
+}
+
+framework_apm() {
+	ui_print "==> Framework Patch (ApplicationPackageManager.smali)"
+
+	app_package_manager_file="$(find "${TMP}/framework" -type f -name "ApplicationPackageManager.smali")"
+	if [ -z "${app_package_manager_file}" -o ! -e "${app_package_manager_file}" ]; then
+		ui_print " -> Cannot found ApplicationPackageManager.smali"
+		ui_print ""
+		return 1
+	fi
+	app_package_manager_dex="$(echo "${app_package_manager_file}" | sed "s#${TMP}/framework/smali_\(classes[0-9]*\)/.*#\1.dex#g")" ; [ "${app_package_manager_dex}" = "${app_package_manager_file}" ] && app_package_manager_dex=classes.dex
+	apm_method="public .*hasSystemFeature(Ljava/lang/String;)Z"
+
+	if (! grep -wlq "$app_package_manager_file" -e "$apm_method"); then
+		ui_print " -> hasSystemFeature method not found in ApplicationPackageManager.smali"
+		ui_print ""
+		return 1
+	fi
+
+	app_package_manager_file_org="${app_package_manager_file}"
+	app_package_manager_file="$(basename "${app_package_manager_file}")"
+
+	rm -rf "${app_package_manager_file}"
+	cp "${app_package_manager_file_org}" "${app_package_manager_file}"
+
+	apm_line="$(grep -w "$app_package_manager_file" -e "$apm_method")"
+	apm_line_method="$(echo "${apm_method}" | sed -e 's/\//\\\//g')"
+	apm_line_start="$(sed -n "/${apm_line_method}/=" "${app_package_manager_file}")"
+	apm_line_end="$(sed -n "/${apm_line_method}/,\$p" "${app_package_manager_file}" | sed -n '/.end method/=' | head -1)" ; apm_line_end=$((apm_line_start + apm_line_end))
+	apm_method_code="$(sed -n "${apm_line_start},${apm_line_end}p" "${app_package_manager_file}")"
+
+	if [ ! -z "$(echo "${apm_method_code}" | grep 'Lcom/android/internal/util/framework/Android;->hasSystemFeature(ZLjava/lang/String;)Z')" ]; then
+		ui_print " -> Already patched"
+		ui_print ""
+		return 1
+	fi
+
+	apm_return="$(echo "$apm_method_code" | tail -n2 | head -n1)"
+	apm_move_result="$(echo "$apm_method_code" | grep -e "move-result *")"
+	apm_has_sys_feature="$(echo "$apm_method_code" | grep "Ljava/lang/String;I)")"
+	apm_name=""
+	apm_last_reg=""
+	if [ -n "$apm_has_sys_feature" ]; then
+		apm_has_sys_feature="$(echo "$apm_has_sys_feature" | cut -d',' -f1-3)"
+		apm_regex='s/^.+\{.[[:digit:]]+,[[:blank:]](.[[:digit:]]+),[[:blank:]](.[[:digit:]]+)\}$/\1;\2/p'
+		apm_has_sys_feature="$(echo "$apm_has_sys_feature" | sed -nE "$apm_regex")"
+		apm_name="$(echo "$apm_has_sys_feature" | cut -d';' -f1)"
+		apm_last_reg="$(echo "$apm_has_sys_feature" | cut -d';' -f2)"
+	fi
+
+	if [ -z "$apm_name" ]; then
+		ui_print " -> Name register not found in hasSystemFeature method"
+		ui_print ""
+		return 1
+	fi
+
+	if [ -z "$apm_last_reg" ]; then
+		ui_print "Last register not found in hasSystemFeature method"
+		ui_print ""
+		return 1
+	fi
+
+	move_result_replacement="
+move-result $apm_last_reg
+"
+
+	return_replacement="
+return $apm_last_reg
+"
+
+	has_sys_feature="
+invoke-static {$apm_last_reg, $apm_name}, Lcom/android/internal/util/framework/Android;->hasSystemFeature(ZLjava/lang/String;)Z
+
+move-result $apm_last_reg
+"
+
+	apm_method_code_new="${apm_method_code}"
+	apm_method_code_new="$(echo "${apm_method_code_new}" | sed -e "s/${apm_move_result}/    move-result $apm_last_reg/g")"
+	apm_method_code_new="$(echo "${apm_method_code_new}" | sed "/${apm_return}/i\\
+\n\
+    invoke-static {$apm_last_reg, $apm_name}, Lcom/android/internal/util/framework/Android;->hasSystemFeature(ZLjava/lang/String;)Z\n\
+\n\
+    move-result $apm_last_reg\n\
+")"
+	apm_method_code_new="$(echo "${apm_method_code_new}" | sed -e "s/${apm_return}/    return $apm_last_reg/g")"
+	sed "${apm_line_start},${apm_line_end}c\\
+$(echo "${apm_method_code_new}" | sed -e 's/$/\\n\\/g')\
+" ${app_package_manager_file} | sed -e 's/\\n\\$//g' -e 's/.end method[ ]*\\n/.end method\n/g' > "${app_package_manager_file}.patch"
+
+	rm -rf "${app_package_manager_file}"
+	mv "${app_package_manager_file}.patch" "${app_package_manager_file}"
+
+	rm -rf "${app_package_manager_file_org}"
+	cp "${app_package_manager_file}" "${app_package_manager_file_org}"
+
+	ui_print "==> Done"
+	ui_print ""
+
+	return 0
+}
+
+recompile() {
+	ui_print "==> Patching framework.jar"
+
+	locale_patch="${1}"
+	multispace_patch="${2}"
+	akss="${3}"
+	instrumentation="${4}"
+	app_package_manager="${5}"
+	framework_patch="$([ "${akss}" = "Y" -a "${instrumentation}" = "Y" -a "${app_package_manager}" = "Y" ] && echo "Y" || echo "N")"
+
+	echo "locale_patch : ${locale_patch}"
+	echo "multispace_patch : ${multispace_patch}"
+	echo "framework_patch : ${framework_patch}"
+
+	if [ "${locale_patch}" = "Y" -o "${multispace_patch}" = "Y" -o "${framework_patch}" = "Y" ]; then
+		rm -rf "$TMP/framework-patched.jar"
+		apktool b "$TMP/framework" -api "$API" --copy-original --output "$TMP/framework-patched.jar"
+
+		rm -rf "$TMP/framework-patched"
+		unzip -qo "$stock_framework" -d "$TMP/framework-patched"
+
+		if [ "${locale_patch}" = "Y" ]; then
+			locale_patch_file="$(find "${TMP}/framework" -type f -name "Configuration.smali")"
+			locale_patch_dex="$(echo "${locale_patch_file}" | sed "s#${TMP}/framework/smali_\(classes[0-9]*\)/.*#\1.dex#g")" ; [ "${locale_patch_dex}" = "${locale_patch_file}" ] && locale_patch_dex=classes.dex
+			unzip -qo "$TMP/framework-patched.jar" \
+				"$locale_patch_dex" \
+				-d "$TMP/framework-patched"
+		fi
+		if [ "${multispace_patch}" = "Y" ]; then
+			multispace_patch_file="$(find "${TMP}/framework" -type f -name "LgsiFeatures.smali")"
+			multispace_patch_dex="$(echo "${multispace_patch_file}" | sed "s#${TMP}/framework/smali_\(classes[0-9]*\)/.*#\1.dex#g")" ; [ "${multispace_patch_dex}" = "${multispace_patch_file}" ] && multispace_patch_dex=classes.dex
+			unzip -qo "$TMP/framework-patched.jar" \
+				"$multispace_patch_dex" \
+				-d "$TMP/framework-patched"
+		fi
+		if [ "${framework_patch}" = "Y" ]; then
+			if [ "${akss}" = "Y" ]; then
+				akss_file="$(find "${TMP}/framework" -type f -name "AndroidKeyStoreSpi.smali")"
+				akss_dex="$(echo "${akss_file}" | sed "s#${TMP}/framework/smali_\(classes[0-9]*\)/.*#\1.dex#g")" ; [ "${akss_dex}" = "${akss_file}" ] && akss_dex=classes.dex
+				unzip -qo "$TMP/framework-patched.jar" \
+					"$akss_dex" \
+					-d "$TMP/framework-patched"
+			fi
+			if [ "${instrumentation}" = "Y" ]; then
+				instrumentation_file="$(find "${TMP}/framework" -type f -name "Instrumentation.smali")"
+				instrumentation_dex="$(echo "${instrumentation_file}" | sed "s#${TMP}/framework/smali_\(classes[0-9]*\)/.*#\1.dex#g")" ; [ "${instrumentation_dex}" = "${instrumentation_file}" ] && instrumentation_dex=classes.dex
+				unzip -qo "$TMP/framework-patched.jar" \
+					"$instrumentation_dex" \
+					-d "$TMP/framework-patched"
+			fi
+			if [ "${app_package_manager}" = "Y" ]; then
+				app_package_manager_file="$(find "${TMP}/framework" -type f -name "ApplicationPackageManager.smali")"
+				app_package_manager_dex="$(echo "${app_package_manager_file}" | sed "s#${TMP}/framework/smali_\(classes[0-9]*\)/.*#\1.dex#g")" ; [ "${app_package_manager_dex}" = "${app_package_manager_file}" ] && app_package_manager_dex=classes.dex
+				unzip -qo "$TMP/framework-patched.jar" \
+					"$app_package_manager_dex" \
+					-d "$TMP/framework-patched"
+			fi
+		fi
+	else
+		rm -rf "$TMP/framework-patched"
+		unzip -qo "$stock_framework" -d "$TMP/framework-patched"
+	fi
+
+	num_of_classes="$(find "$TMP/framework-patched" -maxdepth 1 -type f -name "classes*.dex" | wc -l)"
+	last_dex_name="classes${num_of_classes}.dex"
+	mod_dex_name="classes$((num_of_classes+1)).dex"
+	if ! diff "$classes_dex" "$TMP/framework-patched/$last_dex_name" &> /dev/null ; then
+		rm -rf "$TMP/framework-patched/$mod_dex_name"
+		cp "$classes_dex" "$TMP/framework-patched/$mod_dex_name"
+	fi
+	rm -rf "$TMP/framework-patched.zip" "$TMP/framework-patched.jar"
+	cd "$TMP/framework-patched"
+	zip -qr0 "$TMP/framework-patched.zip" .
+	cd - &> /dev/null
+
+	if [ ! -e "$TMP/framework-patched.zip" ]; then
+		ui_print " -> Modifying framework.jar failed"
+		ui_print ""
+		return 1
+	fi
+
+	zipalign -f -p -z 4 "$TMP/framework-patched.zip" "$TMP/framework-patched.jar"
+
+	ui_print "==> Done"
+	ui_print ""
+
+	return 0
+}
+
+
+locale_patch="${1}"
+multispace_patch="${2}"
+framework_1_patch="${3}"
+framework_2_patch="${3}"
+framework_3_patch="${3}"
+
+if [ "${local_debug}" = "Y" ]; then
+	locale_patch=Y
+	multispace_patch=Y
+	framework_1_patch=Y
+	framework_2_patch=Y
+	framework_3_patch=Y
+fi
+
+locale_patched=N
+multispace_patched=N
+framework_1_patched=N
+framework_2_patched=N
+framework_3_patched=N
+
+if [ "${locale_patch}" != "Y" -a "${multispace_patch}" != "Y" -a "${framework_1_patch}" != "Y" -a "${framework_2_patch}" != "Y" -a "${framework_3_patch}" != "Y" ]; then
+	ui_print "Nothing todo"
+	exit 1
+fi
+
+decompile
+
+if [ "${locale_patch}" = "Y" ]; then
+	locale_patch
+	if [ $? -eq 0 ]; then
+		locale_patched=Y
+	fi
+fi
+
+if [ "${multispace_patch}" = "Y" ]; then
+	multispace_patch
+	if [ $? -eq 0 ]; then
+		multispace_patched=Y
+	fi
+fi
+
+if [ "${framework_1_patch}" = "Y" ]; then
+	framework_akss
+	if [ $? -eq 0 ]; then
+		framework_1_patched=Y
+	fi
+fi
+
+if [ "${framework_2_patch}" = "Y" ]; then
+	framework_instrumentation
+	if [ $? -eq 0 ]; then
+		framework_2_patched=Y
+	fi
+fi
+
+if [ "${framework_3_patch}" = "Y" ]; then
+	framework_apm
+	if [ $? -eq 0 ]; then
+		framework_3_patched=Y
+	fi
+fi
+
+recompile ${locale_patched} ${multispace_patched} ${framework_1_patched} ${framework_2_patched} ${framework_3_patched}
+

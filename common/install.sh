@@ -77,6 +77,21 @@ ui_print ""
 # Initialize step counter
 STEP=0
 
+# Framework Patch Installation
+STEP=$((STEP + 1))
+ui_print "==> Step ${STEP}: Framework Patch Installation"
+ui_print " Applies Framework patch. (Framework-patcher-GO)"
+ui_print " Framework 패치를 적용합니다. (Framework-patcher-GO)"
+ui_print "Do you want to apply the Framework patch?"
+ui_print " - Vol Up   = Yes"
+ui_print " - Vol Down = No"
+if chooseport; then
+    framework_patch_choice="Y"
+else
+    framework_patch_choice="N"
+fi
+ui_print ""
+
 if [ "${model}" = "TB371FC" -a "${region}" = "PRC" ]; then
     # Korean Patch Installation
     STEP=$((STEP + 1))
@@ -249,6 +264,9 @@ ui_print ""
 
 # Summary of Choices
 ui_print "==> Summary of Choices"
+if [ ! -z "${framework_patch_choice}" ]; then
+    ui_print "$(printf " %-50s : %s\n" "Framework Patch Installation" "${framework_patch_choice}")"
+fi
 if [ ! -z "${korean_patch_choice}" ]; then
     ui_print "$(printf " %-50s : %s\n" "Korean Patch Installation" "${korean_patch_choice}")"
 fi
@@ -297,6 +315,19 @@ ui_print ""
 # Initialize step counter
 STEP=0
 
+# Framework Patch Installation
+if [ ! -z "${framework_patch_choice}" ]; then
+    STEP=$((STEP + 1))
+    ui_print "==> Step ${STEP}: Framework Patch Installation"
+    if [ "${framework_patch_choice}" = "Y" ]; then
+        ui_print "Installing Framework Patch..."
+        ui_print "Framework patch installation complete."
+    else
+        ui_print "Framework patch installation skipped."
+    fi
+    ui_print ""
+fi
+
 # Korean Patch Installation
 if [ ! -z "${korean_patch_choice}" ]; then
     STEP=$((STEP + 1))
@@ -309,12 +340,12 @@ if [ ! -z "${korean_patch_choice}" ]; then
         sed -i -e 's/#locale#//g' $MODPATH/post-fs-data.sh
         ui_print " - service.sh"
         sed -i -e 's/#locale#//g' $MODPATH/service.sh
-        mkdir -p ${system_path}/framework
-        for framework in $MODPATH/common/files/stonecold-kr/*.jar
-        do
-            ui_print " - $(basename "${framework}")"
-            cp -a ${framework} ${system_path}/framework/
-        done
+        #mkdir -p ${system_path}/framework
+        #for framework in $MODPATH/common/files/stonecold-kr/*.jar
+        #do
+        #    ui_print " - $(basename "${framework}")"
+        #    cp -a ${framework} ${system_path}/framework/
+        #done
         mkdir -p ${product_path}/overlay
         for rro in $MODPATH/common/files/stonecold-kr/*.apk
         do
@@ -580,9 +611,9 @@ if [ ! -z "${multiple_space_choice}" ]; then
             ui_print " - ZuiSettingsMultipleSpace.apk"
             cp -a $MODPATH/common/files/stonecold-multiplespace/ZuiSettingsMultipleSpace.apk ${product_path}/overlay/
         else
-            ui_print " - framework.jar"
-            mkdir -p ${system_path}/framework
-            cp -a $MODPATH/common/files/stonecold-multiplespace/framework.jar-ZUI_16.0.324_240718_ROW ${system_path}/framework/framework.jar
+            #ui_print " - framework.jar"
+            #mkdir -p ${system_path}/framework
+            #cp -a $MODPATH/common/files/stonecold-multiplespace/framework.jar-ZUI_16.0.324_240718_ROW ${system_path}/framework/framework.jar
             ui_print " - post-fs-data.sh"
             sed -i -e 's/#multispace#//g' $MODPATH/post-fs-data.sh
         fi
@@ -651,6 +682,75 @@ if [ ! -z "${bootanimation_choice}" ]; then
     ui_print ""
 fi
 
+# Framework patcher
+if [ "${framework_patch_choice}" = "Y" -o "${korean_patch_choice}" = "Y" ] || [ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${fingerprint}" = "Lenovo/TB320FC/TB320FC:14/UKQ1.231025.001/ZUI_16.0.324_240718_ROW:user/release-keys" ]; then
+    STEP=$((STEP + 1))
+    ui_print "==> Step ${STEP}: Framework patch"
+    ui_print "Installing Framework Patch..."
+    framework_patched=N
+    if [ "${framework_patch_choice}" = "Y" -o "${korean_patch_choice}" = "Y" ] || [ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${fingerprint}" = "Lenovo/TB320FC/TB320FC:14/UKQ1.231025.001/ZUI_16.0.324_240718_ROW:user/release-keys" ]; then
+        ui_print " - /system/framework/framework.jar"
+        multispace_patch="$([ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${fingerprint}" = "Lenovo/TB320FC/TB320FC:14/UKQ1.231025.001/ZUI_16.0.324_240718_ROW:user/release-keys" ] && echo "Y" || echo "N")"
+        rm -rf /data/local/tmp/framework-patch $MODPATH/common/files/stonecold-framework/framework-patched.jar
+        cp -a $MODPATH/common/files/stonecold-framework /data/local/tmp/framework-patch
+        . /data/local/tmp/framework-patch/framework-go ${korean_patch_choice:-N} ${multispace_patch:-N} ${framework_patch_choice:-N}
+        if [ -e /data/local/tmp/framework-patch/framework-patched.jar ]; then
+            framework_patched=Y
+            mkdir -p ${system_path}/framework
+            cp -a /data/local/tmp/framework-patch/framework-patched.jar ${system_path}/framework/framework.jar
+        fi
+        rm -rf /data/local/tmp/framework-patch
+    fi
+    if [ "${korean_patch_choice}" = "Y" ]; then
+        ui_print " - /system/framework/services.jar"
+        rm -rf /data/local/tmp/services-patch $MODPATH/common/files/stonecold-services/services-patched.jar
+        cp -a $MODPATH/common/files/stonecold-services /data/local/tmp/services-patch
+        . /data/local/tmp/services-patch/services-go ${korean_patch_choice:-N}
+        if [ -e /data/local/tmp/services-patch/services-patched.jar ]; then
+            framework_patched=Y
+            mkdir -p ${system_path}/services
+            cp -a /data/local/tmp/services-patch/services-patched.jar ${system_path}/services/services.jar
+        fi
+        rm -rf /data/local/tmp/services-patch
+    fi
+    if [ "${framework_patched}" = "Y" ]; then
+        rm -rf /data/dalvik-cache/arm64/system@framework@*
+        rm -rf /data/dalvik-cache/arm/system@framework@*
+        rm -rf /data/dalvik-cache/arm64/system@services@*
+        rm -rf /data/dalvik-cache/arm/system@services@*
+        mkdir -p $MODPATH/system/framework $MODPATH/system/framework/arm64 $MODPATH/system/framework/arm
+        if [ "${environment}" = "magisk" ]; then
+            touch $MODPATH/system/framework/boot-framework.vdex
+            touch $MODPATH/system/framework/arm64/boot-framework.art
+            touch $MODPATH/system/framework/arm64/boot-framework.oat
+            touch $MODPATH/system/framework/arm/boot-framework.art
+            touch $MODPATH/system/framework/arm/boot-framework.oat
+        else
+            mknod $MODPATH/system/framework/boot-framework.vdex c 0 0
+            mknod $MODPATH/system/framework/arm64/boot-framework.art c 0 0
+            mknod $MODPATH/system/framework/arm64/boot-framework.oat c 0 0
+            mknod $MODPATH/system/framework/arm64/boot-framework.vdex c 0 0
+            mknod $MODPATH/system/framework/arm/boot-framework.art c 0 0
+            mknod $MODPATH/system/framework/arm/boot-framework.oat c 0 0
+            mknod $MODPATH/system/framework/arm/boot-framework.vdex c 0 0
+        fi
+        find /system/framework -type f -name 'boot-framework.*' | while read -r l
+        do
+            if [ -e $MODPATH/${l} ]; then
+                continue
+            fi
+            mkdir -p $(dirname ${MODPATH}/${l})
+            if [ "${environment}" = "magisk" ]; then
+                touch $MODPATH/${l}
+            else
+                mknod $MODPATH/${l} c 0 0
+            fi
+        done
+    fi
+    ui_print "Framework patch installation complete."
+    ui_print ""
+fi
+
 
 # Finalization Step
 ui_print "==> Finalization Step"
@@ -660,10 +760,6 @@ chmod 755 $MODPATH/*.sh
 if [ "${korean_patch_choice}" = "Y" ]; then
     settings put system system_locales 'ko-KR'
     settings put global device_name "Xiaoxin Pad Pro 12.7"
-    rm -rf /data/dalvik-cache/arm64/system@framework@*
-fi
-if [ "${multiple_space_choice}" = "Y" ]; then
-    rm -rf /data/dalvik-cache/arm64/system@framework@*
 fi
 if [ "${debloat}" = "true" ]; then
     cat $MODPATH/common/files/stonecold-debloat/system.prop >> $MODPATH/system.prop

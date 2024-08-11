@@ -1,0 +1,165 @@
+#!/bin/sh
+
+local_debug=N
+TMP="/data/local/tmp/services-patch"
+stock_services="/system/services/services.jar"
+
+#for local debug
+if [ ! -z "${ANDROID_ROOT}" ]; then
+	. ${TMP}/func.sh
+	chmod 755 "${TMP}/aapt"
+	chmod 755 "${TMP}/zip"
+	chmod 755 "${TMP}/zipalign"
+
+	alias zip="${TMP}/zip"
+	alias zipalign="${TMP}/zipalign"
+else
+	local_debug=Y
+	TMP="$(pwd)"
+	stock_services="${TMP}/services.jar"
+	API=31
+	alias sed=gsed
+	alias zipalign=$(ls /Volumes/Data/Users/forumi0721/Library/Android/sdk/build-tools/* -d | sort -V | tail -1)/zipalign
+	ui_print() {
+		echo "${1}"
+	}
+
+	abort() {
+		echo "${1}"
+		exit 1
+	}
+fi
+
+
+decompile() {
+	ui_print "==> Decompile"
+
+	rm -rf ${TMP}/services
+	apktool d ${stock_services} -api $API -f --output ${TMP}/services
+
+	ui_print "==> Done"
+	ui_print ""
+}
+
+locale_patch() {
+	ui_print "==> Locale Patch (Configuration.smali)"
+
+	atms_file="$(find "${TMP}/services" -type f -name "ActivityTaskManagerService.smali" | grep 'com/android/server/wm/ActivityTaskManagerService.smali')"
+	if [ -z "${atms_file}" -o ! -e "${atms_file}" ]; then
+		ui_print " -> Cannot found ActivityTaskManagerService.smali"
+		ui_print ""
+		return 1
+	fi
+	atms_dex="$(echo "${atms_file}" | sed "s#${TMP}/services/smali_\(classes[0-9]*\)/.*#\1.dex#g")" ; [ "${atms_dex}" = "${atms_file}" ] && atms_dex=classes.dex
+	atms_method=".method public updateConfiguration("
+
+	if (! grep -lq "$atms_file" -e "$atms_method"); then
+		ui_print " -> setLocales method not found in Configuration.smali"
+		ui_print ""
+		return 1
+	fi
+
+	atms_file_org="${atms_file}"
+	atms_file="${TMP}/$(basename "${atms_file}")"
+
+	rm -rf "${atms_file}"
+	cp "${atms_file_org}" "${atms_file}"
+
+	atms_line="$(grep -w "${atms_file}" -e "${atms_method}")"
+	atms_line_start="$(sed -n "/${atms_method}/=" "${atms_file}")"
+	atms_line_end="$(sed -n "/${atms_method}/,\$p" "${atms_file}" | sed -n '/.end method/=' | head -1)" ; atms_line_end=$((atms_line_start + atms_line_end))
+	atms_method_code="$(sed -n "${atms_line_start},${atms_line_end}p" "${atms_file}")"
+
+	if [ ! -z "$(echo "${atms_method_code}" | grep 'ro.stonecold.krpatch.enabled')" ]; then
+		ui_print " -> Already patched"
+		ui_print ""
+		return 1
+	fi
+
+	atms_method_code_new="$(echo "${atms_method_code}" | sed -e 's/persist.sys.lenovo.is_test_mode/ro.stonecold.krpatch.enabled/g')"
+	sed "${atms_line_start},${atms_line_end}c\\
+$(echo "${atms_method_code_new}" | sed -e 's/$/\\n\\/g')\
+" ${atms_file} | sed -e 's/\\n\\$//g' -e 's/.end method[ ]*\\n/.end method\n/g' > "${atms_file}.patch"
+
+	rm -rf "${atms_file}"
+	mv "${atms_file}.patch" "${atms_file}"
+
+	rm -rf "${atms_file_org}"
+	cp "${atms_file}" "${atms_file_org}"
+
+	ui_print "==> Done"
+	ui_print ""
+
+	return 0
+}
+
+recompile() {
+	ui_print "==> Patching services.jar"
+
+	locale_patch="${1}"
+
+	echo "locale_patch : ${locale_patch}"
+
+	if [ "${locale_patch}" = "Y" ]; then
+		rm -rf "$TMP/services-patched.jar"
+		apktool b "$TMP/services" -api "$API" --copy-original --output "$TMP/services-patched.jar"
+
+		rm -rf "$TMP/services-patched"
+		unzip -qo "$stock_services" -d "$TMP/services-patched"
+
+		if [ "${locale_patch}" = "Y" ]; then
+			atms_file="$(find "${TMP}/services" -type f -name "ActivityTaskManagerService.smali" | grep 'com/android/server/wm/ActivityTaskManagerService.smali')"
+			atms_dex="$(echo "${atms_file}" | sed "s#${TMP}/services/smali_\(classes[0-9]*\)/.*#\1.dex#g")" ; [ "${atms_dex}" = "${atms_file}" ] && atms_dex=classes.dex
+			unzip -qo "$TMP/services-patched.jar" \
+				"$atms_dex" \
+				-d "$TMP/services-patched"
+		fi
+	else
+		rm -rf "$TMP/services-patched"
+		unzip -qo "$stock_services" -d "$TMP/services-patched"
+	fi
+
+	rm -rf "$TMP/services-patched.zip" "$TMP/services-patched.jar"
+	cd "$TMP/services-patched"
+	zip -qr0 "$TMP/services-patched.zip" .
+	cd - &> /dev/null
+
+	if [ ! -e "$TMP/services-patched.zip" ]; then
+		ui_print " -> Modifying services.jar failed"
+		ui_print ""
+		return 1
+	fi
+
+	zipalign -f -p -z 4 "$TMP/services-patched.zip" "$TMP/services-patched.jar"
+
+	ui_print "==> Done"
+	ui_print ""
+
+	return 0
+}
+
+
+locale_patch="${1}"
+
+if [ "${local_debug}" = "Y" ]; then
+	locale_patch=Y
+fi
+
+locale_patched=N
+
+if [ "${locale_patch}" != "Y" ]; then
+	ui_print "Nothing todo"
+	exit 1
+fi
+
+decompile
+
+if [ "${locale_patch}" = "Y" ]; then
+	locale_patch
+	if [ $? -eq 0 ]; then
+		locale_patched=Y
+	fi
+fi
+
+recompile ${locale_patched}
+
