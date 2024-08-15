@@ -2,10 +2,11 @@
 
 local_debug=N
 TMP="/data/local/tmp/services-patch"
-stock_services="/system/services/services.jar"
+stock_services="/system/framework/services.jar"
 
 #for local debug
-if [ ! -z "${ANDROID_ROOT}" ]; then
+#if [ ! -z "${ANDROID_ROOT}" ]; then
+if [ ! -z "${BOOTMODE}" ]; then
 	. ${TMP}/func.sh
 	chmod 755 "${TMP}/aapt"
 	chmod 755 "${TMP}/zip"
@@ -18,8 +19,13 @@ else
 	TMP="$(pwd)"
 	stock_services="${TMP}/services.jar"
 	API=31
-	alias sed=gsed
-	alias zipalign=$(ls /Volumes/Data/Users/forumi0721/Library/Android/sdk/build-tools/* -d | sort -V | tail -1)/zipalign
+	if [ ! -z "${ANDROID_ROOT}" ]; then
+		alias zip="${TMP}/zip"
+		alias zipalign="${TMP}/zipalign"
+	else
+		alias sed=gsed
+		alias zipalign=$(ls /Volumes/Data/Users/forumi0721/Library/Android/sdk/build-tools/* -d | sort -V | tail -1)/zipalign
+	fi
 	ui_print() {
 		echo "${1}"
 	}
@@ -47,6 +53,7 @@ locale_patch() {
 	atms_file="$(find "${TMP}/services" -type f -name "ActivityTaskManagerService.smali" | grep 'com/android/server/wm/ActivityTaskManagerService.smali')"
 	if [ -z "${atms_file}" -o ! -e "${atms_file}" ]; then
 		ui_print " -> Cannot found ActivityTaskManagerService.smali"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -54,7 +61,8 @@ locale_patch() {
 	atms_method=".method public updateConfiguration("
 
 	if (! grep -lq "$atms_file" -e "$atms_method"); then
-		ui_print " -> setLocales method not found in Configuration.smali"
+		ui_print " -> updateConfiguration method not found in ActivityTaskManagerService.smali"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -72,6 +80,7 @@ locale_patch() {
 
 	if [ ! -z "$(echo "${atms_method_code}" | grep 'ro.stonecold.krpatch.enabled')" ]; then
 		ui_print " -> Already patched"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -126,6 +135,7 @@ recompile() {
 
 	if [ ! -e "$TMP/services-patched.zip" ]; then
 		ui_print " -> Modifying services.jar failed"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi

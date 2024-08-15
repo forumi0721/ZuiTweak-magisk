@@ -6,7 +6,8 @@ stock_framework="/system/framework/framework.jar"
 classes_dex="${TMP}/classes.dex"
 
 #for local debug
-if [ ! -z "${ANDROID_ROOT}" ]; then
+#if [ ! -z "${ANDROID_ROOT}" ]; then
+if [ ! -z "${BOOTMODE}" ]; then
 	. ${TMP}/func.sh
 	chmod 755 "${TMP}/aapt"
 	chmod 755 "${TMP}/zip"
@@ -20,8 +21,13 @@ else
 	stock_framework="${TMP}/framework.jar"
 	classes_dex="${TMP}/classes.dex"
 	API=31
-	alias sed=gsed
-	alias zipalign=$(ls /Volumes/Data/Users/forumi0721/Library/Android/sdk/build-tools/* -d | sort -V | tail -1)/zipalign
+	if [ ! -z "${ANDROID_ROOT}" ]; then
+		alias zip="${TMP}/zip"
+		alias zipalign="${TMP}/zipalign"
+	else
+		alias sed=gsed
+		alias zipalign=$(ls /Volumes/Data/Users/forumi0721/Library/Android/sdk/build-tools/* -d | sort -V | tail -1)/zipalign
+	fi
 	ui_print() {
 		echo "${1}"
 	}
@@ -49,6 +55,7 @@ locale_patch() {
 	configuration_file="$(find "${TMP}/framework" -type f -name "Configuration.smali")"
 	if [ -z "${configuration_file}" -o ! -e "${configuration_file}" ]; then
 		ui_print " -> Cannot found Configuration.smali"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -57,6 +64,7 @@ locale_patch() {
 
 	if (! grep -wlq "$configuration_file" -e "$configuration_method"); then
 		ui_print " -> setLocales method not found in Configuration.smali"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -74,6 +82,7 @@ locale_patch() {
 
 	if [ ! -z "$(echo "${configuration_method_code}" | grep 'ro.stonecold.krpatch.enabled')" ]; then
 		ui_print " -> Already patched"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -101,6 +110,7 @@ multispace_patch() {
 	lgsi_features_file="$(find "${TMP}/framework" -type f -name "LgsiFeatures.smali")"
 	if [ -z "${lgsi_features_file}" -o ! -e "${lgsi_features_file}" ]; then
 		ui_print " -> Cannot found LgsiFeatures.smali"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -109,6 +119,7 @@ multispace_patch() {
 
 	if (! grep -wlq "$lgsi_features_file" -e "$lgsi_features_method"); then
 		ui_print " -> static constructor method not found in LgsiFeatures.smali"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -147,6 +158,7 @@ multispace_patch() {
 	multispace_method_new="$(echo "${multispace_method}" | sed -e "s/^\(.*\) {\(.*\), \(.*\), \(.*\)}, \(.*\);/\1 {\2, \3, ${lgsi_features_true}}, \5;/g")"
 	if [ "${multispace_method_new}" = "${multispace_method}" ]; then
 		ui_print " -> Already patched"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -168,6 +180,7 @@ framework_akss() {
 	akss_file="$(find "${TMP}/framework" -type f -name "AndroidKeyStoreSpi.smali")"
 	if [ -z "${akss_file}" -o ! -e "${akss_file}" ]; then
 		ui_print " -> Cannot found AndroidKeyStoreSpi.smali"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -176,6 +189,7 @@ framework_akss() {
 
 	if (! grep -wlq "$akss_file" -e "$akss_method"); then
 		ui_print " -> engineGetCertificateChain method not found in AndroidKeyStoreSpi.smali"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -193,6 +207,7 @@ framework_akss() {
 
 	if [ ! -z "$(echo "${akss_method_code}" | grep 'Lcom/android/internal/util/framework/Android;->engineGetCertificateChain(\[Ljava/security/cert/Certificate;)\[Ljava/security/cert/Certificate;')" ]; then
 		ui_print " -> Already patched"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -204,6 +219,7 @@ framework_akss() {
 
 	if [ -z "$leaf_cert" ]; then
 		ui_print " -> Leaf certificate register not found in engineGetCertificateChain method"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -235,6 +251,7 @@ framework_instrumentation() {
 	instrumentation_file="$(find "${TMP}/framework" -type f -name "Instrumentation.smali")"
 	if [ -z "${instrumentation_file}" -o ! -e "${instrumentation_file}" ]; then
 		ui_print " -> Cannot found Instrumentation.smali"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -247,6 +264,7 @@ framework_instrumentation() {
 		i_method="public newApplication"
 		if (! grep -wlq "${instrumentation_file}" -e "${i_static_method}") && (! grep -wlq "${instrumentation_file}" -e "${i_method}"); then
 			ui_print " -> newApplication method not in Instrumentation.smali"
+			ui_print "==> Done"
 			ui_print ""
 			return 1
 		fi
@@ -265,6 +283,7 @@ framework_instrumentation() {
 
 	if [ ! -z "$(echo "${i_static_method_code}" | grep 'Lcom/android/internal/util/framework/Android;->newApplication(Landroid/content/Context;)V')" ]; then
 		ui_print " -> Already patched"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -274,6 +293,7 @@ framework_instrumentation() {
 
 	if [ -z "$i_static_context" ]; then
 		ui_print "Context register not found in newApplication static method"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -296,6 +316,7 @@ $(echo "${i_static_method_code_new}" | sed -e 's/$/\\n\\/g')\
 
 	if [ ! -z "$(echo "${i_method_code}" | grep 'Lcom/android/internal/util/framework/Android;->newApplication(Landroid/content/Context;)V')" ]; then
 		ui_print " -> Already patched"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -305,6 +326,7 @@ $(echo "${i_static_method_code_new}" | sed -e 's/$/\\n\\/g')\
 
 	if [ -z "$i_context" ]; then
 		ui_print " -> Context register not found in newApplication method"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -335,6 +357,7 @@ framework_apm() {
 	app_package_manager_file="$(find "${TMP}/framework" -type f -name "ApplicationPackageManager.smali")"
 	if [ -z "${app_package_manager_file}" -o ! -e "${app_package_manager_file}" ]; then
 		ui_print " -> Cannot found ApplicationPackageManager.smali"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -343,6 +366,7 @@ framework_apm() {
 
 	if (! grep -wlq "$app_package_manager_file" -e "$apm_method"); then
 		ui_print " -> hasSystemFeature method not found in ApplicationPackageManager.smali"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -361,6 +385,7 @@ framework_apm() {
 
 	if [ ! -z "$(echo "${apm_method_code}" | grep 'Lcom/android/internal/util/framework/Android;->hasSystemFeature(ZLjava/lang/String;)Z')" ]; then
 		ui_print " -> Already patched"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -380,12 +405,14 @@ framework_apm() {
 
 	if [ -z "$apm_name" ]; then
 		ui_print " -> Name register not found in hasSystemFeature method"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
 
 	if [ -z "$apm_last_reg" ]; then
 		ui_print "Last register not found in hasSystemFeature method"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi
@@ -506,6 +533,7 @@ recompile() {
 
 	if [ ! -e "$TMP/framework-patched.zip" ]; then
 		ui_print " -> Modifying framework.jar failed"
+		ui_print "==> Done"
 		ui_print ""
 		return 1
 	fi

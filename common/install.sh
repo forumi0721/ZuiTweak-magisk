@@ -6,8 +6,8 @@ version=$(getprop ro.com.zui.version)
 fingerprint=$(getprop ro.build.fingerprint)
 debloat=$(getprop ro.stonecold.debloat.enabled)
 if [ "${model}" != "TB320FC" -a "${model}" != "TB371FC" ]; then
-    ui_print "이 모듈은 Lenovo Legion Y700 2023/Xiaoxin Pad Pro 12.7 만 지원합니다. 다른 모델은 지원되지 않습니다."
-    ui_print "This module only supports Lenovo Legion Y700 2023/Xiaoxin Pad Pro 12. Other models are not supported."
+    ui_print "이 모듈은 Lenovo Legion Y700 2023(TB320FC)/Xiaoxin Pad Pro 12.7(TB371FC) 만 지원합니다. 다른 모델은 지원되지 않습니다."
+    ui_print "This module only supports Lenovo Legion Y700 2023(TB320FC)/Xiaoxin Pad Pro 12(TB371FC). Other models are not supported."
     abort "Installation aborted due to incompatible device."
 fi
 if [ "${model}" = "TB371FC" -a "${fingerprint}" != "Lenovo/TB371FC_PRC/TB371FC:13/TKQ1.221013.002/ZUI_15.0.664_240414_PRC:user/release-keys" ]; then
@@ -28,9 +28,6 @@ ui_print "==> Disclaimer"
 ui_print "Warning: This script may modify system files. By proceeding, you accept that the authors of this script are not responsible for any damage or issues that may occur to your device. Use at your own risk."
 ui_print "경고: 이 스크립트는 시스템 파일을 수정할 수 있습니다. 계속 진행하면 이 스크립트의 작성자는 장치에 발생할 수 있는 손상이나 문제에 대해 책임지지 않는다는 것에 동의하는 것입니다. 사용에 따른 책임은 본인에게 있습니다."
 ui_print ""
-ui_print "Note: During installation, Magisk may force-close once due to enabling GMS. You will need to reinstall for proper operation."
-ui_print "참고: 설치 중에 Magisk가 GMS 활성화로 인해 한 번 강제 종료될 수 있습니다. 정상적인 작동을 위해 다시 설치해야 합니다."
-ui_print ""
 ui_print "Do you want to continue?"
 ui_print " - Vol Up   = Yes"
 ui_print " - Vol Down = No"
@@ -44,7 +41,9 @@ ui_print ""
 ui_print "==> Preparation Step"
 ui_print "Preparation is being configured..."
 
+
 # Detect root environment
+rm_tmp=Y
 environment=
 system_path=
 system_ext_path=
@@ -77,20 +76,22 @@ ui_print ""
 # Initialize step counter
 STEP=0
 
-# Framework Patch Installation
-STEP=$((STEP + 1))
-ui_print "==> Step ${STEP}: Framework Patch Installation"
-ui_print " Applies Framework patch. (Framework-patcher-GO)"
-ui_print " Framework 패치를 적용합니다. (Framework-patcher-GO)"
-ui_print "Do you want to apply the Framework patch?"
-ui_print " - Vol Up   = Yes"
-ui_print " - Vol Down = No"
-if chooseport; then
-    framework_patch_choice="Y"
-else
-    framework_patch_choice="N"
+if [ "${model}" = "TB371FC" -o "${model}" = "TB320FC" ]; then
+    # Framework Patch Installation
+    STEP=$((STEP + 1))
+    ui_print "==> Step ${STEP}: Framework Patch Installation"
+    ui_print " Applies Framework patch. (Framework-patcher-GO)"
+    ui_print " Framework 패치를 적용합니다. (Framework-patcher-GO)"
+    ui_print "Do you want to apply the Framework patch?"
+    ui_print " - Vol Up   = Yes"
+    ui_print " - Vol Down = No"
+    if chooseport; then
+        framework_patch_choice="Y"
+    else
+        framework_patch_choice="N"
+    fi
+    ui_print ""
 fi
-ui_print ""
 
 if [ "${model}" = "TB371FC" -a "${region}" = "PRC" ]; then
     # Korean Patch Installation
@@ -286,11 +287,11 @@ fi
 if [ ! -z "${keyboard_mapping_choice}" ]; then
     ui_print "$(printf " %-50s : %s\n" "Keyboard Mapping Change" "${keyboard_mapping_choice}")"
 fi
-if [ ! -z "${multiple_space_choice}" ]; then
-    ui_print "$(printf " %-50s : %s\n" "Multiple Space Activation" "${multiple_space_choice}")"
-fi
 if [ ! -z "${pen_service_choice}" ]; then
     ui_print "$(printf " %-50s : %s\n" "Pen Service Activation" "${pen_service_choice}")"
+fi
+if [ ! -z "${multiple_space_choice}" ]; then
+    ui_print "$(printf " %-50s : %s\n" "Multiple Space Activation" "${multiple_space_choice}")"
 fi
 if [ ! -z "${widevine_choice}" ]; then
     ui_print "$(printf " %-50s : %s\n" "Force Apply Widevine L3 for DRM Playback" "${widevine_choice}")"
@@ -312,8 +313,10 @@ ui_print ""
 ui_print "==> Applying configurations based on your choices"
 ui_print ""
 
+
 # Initialize step counter
 STEP=0
+
 
 # Framework Patch Installation
 if [ ! -z "${framework_patch_choice}" ]; then
@@ -349,7 +352,7 @@ if [ ! -z "${korean_patch_choice}" ]; then
         mkdir -p ${product_path}/overlay
         for rro in $MODPATH/common/files/stonecold-kr/*.apk
         do
-            ui_print " - $(basename "${rro}")"
+            ui_print " - /product/overlay/$(basename "${rro}")"
             bn=$(basename "${rro}")
             to_name=StoneColdOverlay${bn/.apk/}.apk
             if [ "${bn}" = "framework-res.apk" ]; then
@@ -414,7 +417,7 @@ if [ ! -z "${google_play_choice}" ]; then
         mkdir -p ${product_path}/priv-app/Phonesky/lib/arm64
         cp -a $MODPATH/common/files/stonecold-playstore/lib/arm64/* ${product_path}/priv-app/Phonesky/lib/arm64/
         chmod 644 ${product_path}/priv-app/Phonesky/lib/arm64/*
-        ui_print " - /product/etc/permissions"
+        ui_print " - /product/etc/permissions/services.cn.google.xml"
         mkdir -p ${product_path}/etc/permissions
         cp $MODPATH/common/files/stonecold-playstore/services.cn.google.xml ${product_path}/etc/permissions/
         ui_print "Google Play activation complete."
@@ -597,34 +600,6 @@ if [ ! -z "${keyboard_mapping_choice}" ]; then
     ui_print ""
 fi
 
-# Multiple Space Activation
-if [ ! -z "${multiple_space_choice}" ]; then
-    STEP=$((STEP + 1))
-    ui_print "==> Step ${STEP}: Multiple Space Activation"
-    if [ "${multiple_space_choice}" = "Y" ]; then
-        ui_print "Activating Multiple Space..."
-        ui_print " - system.prop"
-        cat $MODPATH/common/files/stonecold-multiplespace/system.prop >> $MODPATH/system.prop
-        if [ "${version}" = "15.0" ]; then
-            cat $MODPATH/common/files/stonecold-multiplespace/ZUI_15.0.prop >> $MODPATH/system.prop
-            mkdir -p ${product_path}/overlay
-            ui_print " - ZuiSettingsMultipleSpace.apk"
-            cp -a $MODPATH/common/files/stonecold-multiplespace/ZuiSettingsMultipleSpace.apk ${product_path}/overlay/
-        else
-            #ui_print " - framework.jar"
-            #mkdir -p ${system_path}/framework
-            #cp -a $MODPATH/common/files/stonecold-multiplespace/framework.jar-ZUI_16.0.324_240718_ROW ${system_path}/framework/framework.jar
-            ui_print " - post-fs-data.sh"
-            sed -i -e 's/#multispace#//g' $MODPATH/post-fs-data.sh
-        fi
-        ui_print "Multiple Space activation complete."
-    else
-        ui_print "Multiple Space activation skipped."
-    fi
-    ui_print ""
-fi
-sed -i '/#multispace#/d' $MODPATH/post-fs-data.sh
-
 # Pen Service Activation
 if [ ! -z "${pen_service_choice}" ]; then
     STEP=$((STEP + 1))
@@ -642,6 +617,34 @@ if [ ! -z "${pen_service_choice}" ]; then
     ui_print ""
 fi
 sed -i '/#penservice#/d' $MODPATH/service.sh
+
+# Multiple Space Activation
+if [ ! -z "${multiple_space_choice}" ]; then
+    STEP=$((STEP + 1))
+    ui_print "==> Step ${STEP}: Multiple Space Activation"
+    if [ "${multiple_space_choice}" = "Y" ]; then
+        ui_print "Activating Multiple Space..."
+        ui_print " - system.prop"
+        cat $MODPATH/common/files/stonecold-multiplespace/system.prop >> $MODPATH/system.prop
+        if [ "${version}" = "15.0" ]; then
+            cat $MODPATH/common/files/stonecold-multiplespace/ZUI_15.0.prop >> $MODPATH/system.prop
+            mkdir -p ${product_path}/overlay
+            ui_print " - /product/overlay/ZuiSettingsMultipleSpace.apk"
+            cp -a $MODPATH/common/files/stonecold-multiplespace/ZuiSettingsMultipleSpace.apk ${product_path}/overlay/
+        else
+            #ui_print " - framework.jar"
+            #mkdir -p ${system_path}/framework
+            #cp -a $MODPATH/common/files/stonecold-multiplespace/framework.jar-ZUI_16.0.324_240718_ROW ${system_path}/framework/framework.jar
+            ui_print " - post-fs-data.sh"
+            sed -i -e 's/#multispace#//g' $MODPATH/post-fs-data.sh
+        fi
+        ui_print "Multiple Space activation complete."
+    else
+        ui_print "Multiple Space activation skipped."
+    fi
+    ui_print ""
+fi
+sed -i '/#multispace#/d' $MODPATH/post-fs-data.sh
 
 # Force Apply Widevine L3 for DRM Playback
 if [ ! -z "${widevine_choice}" ]; then
@@ -691,7 +694,7 @@ if [ "${framework_patch_choice}" = "Y" -o "${korean_patch_choice}" = "Y" ] || [ 
     if [ "${framework_patch_choice}" = "Y" -o "${korean_patch_choice}" = "Y" ] || [ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${fingerprint}" = "Lenovo/TB320FC/TB320FC:14/UKQ1.231025.001/ZUI_16.0.324_240718_ROW:user/release-keys" ]; then
         ui_print " - /system/framework/framework.jar"
         multispace_patch="$([ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${fingerprint}" = "Lenovo/TB320FC/TB320FC:14/UKQ1.231025.001/ZUI_16.0.324_240718_ROW:user/release-keys" ] && echo "Y" || echo "N")"
-        rm -rf /data/local/tmp/framework-patch $MODPATH/common/files/stonecold-framework/framework-patched.jar
+        rm -rf /data/local/tmp/framework-patch
         cp -a $MODPATH/common/files/stonecold-framework /data/local/tmp/framework-patch
         . /data/local/tmp/framework-patch/framework-go ${korean_patch_choice:-N} ${multispace_patch:-N} ${framework_patch_choice:-N}
         if [ -e /data/local/tmp/framework-patch/framework-patched.jar ]; then
@@ -699,19 +702,23 @@ if [ "${framework_patch_choice}" = "Y" -o "${korean_patch_choice}" = "Y" ] || [ 
             mkdir -p ${system_path}/framework
             cp -a /data/local/tmp/framework-patch/framework-patched.jar ${system_path}/framework/framework.jar
         fi
-        rm -rf /data/local/tmp/framework-patch
+        if [ "${rm_tmp}" = "Y" ]; then
+            rm -rf /data/local/tmp/framework-patch
+        fi
     fi
     if [ "${korean_patch_choice}" = "Y" ]; then
         ui_print " - /system/framework/services.jar"
-        rm -rf /data/local/tmp/services-patch $MODPATH/common/files/stonecold-services/services-patched.jar
-        cp -a $MODPATH/common/files/stonecold-services /data/local/tmp/services-patch
+        rm -rf /data/local/tmp/services-patch
+        cp -a $MODPATH/common/files/stonecold-framework /data/local/tmp/services-patch
         . /data/local/tmp/services-patch/services-go ${korean_patch_choice:-N}
         if [ -e /data/local/tmp/services-patch/services-patched.jar ]; then
             framework_patched=Y
-            mkdir -p ${system_path}/services
-            cp -a /data/local/tmp/services-patch/services-patched.jar ${system_path}/services/services.jar
+            mkdir -p ${system_path}/framework
+            cp -a /data/local/tmp/services-patch/services-patched.jar ${system_path}/framework/services.jar
         fi
-        rm -rf /data/local/tmp/services-patch
+        if [ "${rm_tmp}" = "Y" ]; then
+            rm -rf /data/local/tmp/services-patch
+        fi
     fi
     if [ "${framework_patched}" = "Y" ]; then
         rm -rf /data/dalvik-cache/arm64/system@framework@*
@@ -761,17 +768,22 @@ if [ "${korean_patch_choice}" = "Y" ]; then
     settings put system system_locales 'ko-KR'
     settings put global device_name "Xiaoxin Pad Pro 12.7"
 fi
+if [ "${navbar_button_choice}" = "Y" ]; then
+    rm -rf /data/dalvik-cache/arm64/system_ext@priv-app@SystemUI@SystemUI.apk@*
+fi
 if [ "${debloat}" = "true" ]; then
     cat $MODPATH/common/files/stonecold-debloat/system.prop >> $MODPATH/system.prop
 fi
 ui_print "Setup has been finalized successfully."
 ui_print ""
 
+
 # Additional Information
 ui_print "==> Additional Information"
 ui_print " To ensure all features work correctly, please install the Xposed module ZuiTweak."
 ui_print " 모든 기능이 정상적으로 동작하려면 Xposed 모듈 ZuiTweak을 설치해야 합니다."
 ui_print ""
+
 
 # Configuration complete
 ui_print "All configurations have been applied successfully."
