@@ -1,5 +1,7 @@
 # ZuiTweak-magisk
 
+[English Version](README_en.md)
+
 ## 개요
 **ZuiTweak-magisk**은 Lenovo Zui 기반 롬에 여러 가지 트윅을 적용하는 Magisk/APatch 모듈입니다.
 
@@ -19,8 +21,10 @@
 2. **불필요한 앱:** 기본적으로 설치된 불필요한 앱을 삭제합니다.
 
 ### 공통
-1. **Framework 패치:** FrameworkPatchGo를 통합했습니다. (A Magisk/KernelSU/APatch module to modify framework.jar directly on the phone, to build a valid system-level certificate chain.)
+1. **Framework 패치:** Framework Patcher GO를 통합했습니다. (A Magisk/KernelSU/APatch module to modify framework.jar directly on the phone, to build a valid system-level certificate chain.)
+   - [Framework Patcher GO](https://github.com/changhuapeng/FrameworkPatcherGO)
 2. **DRM 컨텐츠 재생을 위한 Widevine L3 강제 적용:** Widevine L3를 강제 적용하여 DRM 콘텐츠를 재생할 수 있게 합니다.
+   - [liboemcrypto.so disabler](https://github.com/Magisk-Modules-Repo/liboemcryptodisabler)
 3. **Bootanimation 교체:** 부팅 애니메이션을 교체합니다.
 
 ## 소스 코드
