@@ -3,6 +3,7 @@ ui_print "==> Device Compatibility Check"
 model="$(getprop ro.product.model | tr '[:lower:]' '[:upper:]')"
 region="$(getprop ro.config.lgsi.region | tr '[:lower:]' '[:upper:]')"
 version=$(getprop ro.com.zui.version)
+major_version=$(getprop ro.com.zui.version | sed -e 's/\..*$//g')
 fingerprint=$(getprop ro.build.fingerprint)
 debloat=$(getprop ro.stonecold.debloat.enabled)
 if [ "${model}" != "TB320FC" -a "${model}" != "TB371FC" ]; then
@@ -10,14 +11,15 @@ if [ "${model}" != "TB320FC" -a "${model}" != "TB371FC" ]; then
     ui_print "This module only supports Lenovo Legion Y700 2023(TB320FC)/Xiaoxin Pad Pro 12(TB371FC). Other models are not supported."
     abort "Installation aborted due to incompatible device."
 fi
-if [ "${model}" = "TB371FC" -a "${fingerprint}" != "Lenovo/TB371FC_PRC/TB371FC:13/TKQ1.221013.002/ZUI_15.0.664_240414_PRC:user/release-keys" ]; then
-    ui_print "이 모듈은 Xiaoxin Pad Pro 12.7 664 버전만 지원합니다. 다른 버전은 지원되지 않습니다."
-    ui_print "This module only supports Xiaoxin Pad Pro 12.7 version 664. Other versions are not supported."
+if [ "${model}" = "TB371FC" ] && [ "${fingerprint}" != "Lenovo/TB371FC_PRC/TB371FC:13/TKQ1.221013.002/ZUI_15.0.664_240414_PRC:user/release-keys" -a "${fingerprint}" != "Lenovo/TB371FC_PRC/TB371FC:14/UKQ1.231222.001/ZUI_16.0.430_240819_PRC:user/release-keys" ]; then
+	ui_print "이 모듈은 Xiaoxin Pad Pro 12.7 ZUI15 664, ZUI16 430 버전만 지원합니다. 다른 버전은 지원되지 않습니다."
+    ui_print "This module only supports Xiaoxin Pad Pro 12.7 version ZUI15 664 or ZUI16 430. Other versions are not supported."
     abort "Installation aborted due to incompatible device."
 fi
 ui_print "Device model : ${model}"
 ui_print "Device region : ${region}"
 ui_print "Device version : ${version}"
+ui_print "Device major version : ${major_version}"
 ui_print "Device fingerprint : ${fingerprint}"
 ui_print "Device compatibility check passed."
 ui_print ""
@@ -76,22 +78,22 @@ ui_print ""
 # Initialize step counter
 STEP=0
 
-if [ "${model}" = "TB371FC" -o "${model}" = "TB320FC" ]; then
-    # Framework Patch Installation
-    STEP=$((STEP + 1))
-    ui_print "==> Step ${STEP}: Framework Patch Installation"
-    ui_print " Applies Framework patch. (Framework-patcher-GO)"
-    ui_print " Framework 패치를 적용합니다. (Framework-patcher-GO)"
-    ui_print "Do you want to apply the Framework patch?"
-    ui_print " - Vol Up   = Yes"
-    ui_print " - Vol Down = No"
-    if chooseport; then
-        framework_patch_choice="Y"
-    else
-        framework_patch_choice="N"
-    fi
-    ui_print ""
-fi
+#if [ "${model}" = "TB371FC" -o "${model}" = "TB320FC" ]; then
+#    # Framework Patch Installation
+#    STEP=$((STEP + 1))
+#    ui_print "==> Step ${STEP}: Framework Patch Installation"
+#    ui_print " Applies Framework patch. (Framework-patcher-GO)"
+#    ui_print " Framework 패치를 적용합니다. (Framework-patcher-GO)"
+#    ui_print "Do you want to apply the Framework patch?"
+#    ui_print " - Vol Up   = Yes"
+#    ui_print " - Vol Down = No"
+#    if chooseport; then
+#        framework_patch_choice="Y"
+#    else
+#        framework_patch_choice="N"
+#    fi
+#    ui_print ""
+#fi
 
 if [ "${model}" = "TB371FC" -a "${region}" = "PRC" ]; then
     # Korean Patch Installation
@@ -215,7 +217,7 @@ if [ "${model}" = "TB371FC" ]; then
     ui_print ""
 fi
 
-if [ "${model}" = "TB320FC" -a "${region}" = "ROW" ] && [ "${version}" = "15.0" -o "${fingerprint}" = "Lenovo/TB320FC/TB320FC:14/UKQ1.231025.001/ZUI_16.0.324_240718_ROW:user/release-keys" ]; then
+if [ "${model}" = "TB320FC" -a "${region}" = "ROW" ] && [ "${major_version}" = "15" -o "${major_version}" = "16" ]; then
     # Multiple Space Activation
     STEP=$((STEP + 1))
     ui_print "==> Step ${STEP}: Multiple Space Activation"
@@ -349,17 +351,19 @@ if [ ! -z "${korean_patch_choice}" ]; then
         #    ui_print " - $(basename "${framework}")"
         #    cp -a ${framework} ${system_path}/framework/
         #done
-        mkdir -p ${product_path}/overlay
-        for rro in $MODPATH/common/files/stonecold-kr/*.apk
-        do
-            ui_print " - /product/overlay/$(basename "${rro}")"
-            bn=$(basename "${rro}")
-            to_name=StoneColdOverlay${bn/.apk/}.apk
-            if [ "${bn}" = "framework-res.apk" ]; then
-                to_name=StoneColdOverlayFrameworkRes.apk
-            fi
-            cp -a ${rro} ${product_path}/overlay/${to_name}
-        done
+		if [ -e $MODPATH/common/files/stonecold-kr/${major_version} ]; then
+			mkdir -p ${product_path}/overlay
+			for rro in $MODPATH/common/files/stonecold-kr/${major_version}/*.apk
+			do
+				ui_print " - /product/overlay/$(basename "${rro}")"
+				bn=$(basename "${rro}")
+				to_name=StoneColdOverlay${bn/.apk/}.apk
+				if [ "${bn}" = "framework-res.apk" ]; then
+					to_name=StoneColdOverlayFrameworkRes.apk
+				fi
+				cp -a ${rro} ${product_path}/overlay/${to_name}
+			done
+		fi
         ui_print "Korean patch installation complete."
     else
         ui_print "Korean patch installation skipped."
@@ -409,14 +413,15 @@ if [ ! -z "${google_play_choice}" ]; then
             mkdir -p ${product_path}/priv-app
             mknod ${product_path}/priv-app/GooglePlayServicesUpdater c 0 0
         fi
-        mkdir -p ${product_path}/priv-app/Phonesky
-        cp $MODPATH/common/files/stonecold-playstore/com.android.vending.apk ${product_path}/priv-app/Phonesky/Phonesky.apk
-        dex2oat64 --dex-file=${product_path}/priv-app/Phonesky/Phonesky.apk --oat-file=${product_path}/priv-app/Phonesky/Phonesky.odex
-        mkdir -p ${product_path}/priv-app/Phonesky/oat/arm64
-        mv ${product_path}/priv-app/Phonesky/Phonesky.odex ${product_path}/priv-app/Phonesky/Phonesky.vdex ${product_path}/priv-app/Phonesky/oat/arm64/
-        mkdir -p ${product_path}/priv-app/Phonesky/lib/arm64
-        cp -a $MODPATH/common/files/stonecold-playstore/lib/arm64/* ${product_path}/priv-app/Phonesky/lib/arm64/
-        chmod 644 ${product_path}/priv-app/Phonesky/lib/arm64/*
+        #mkdir -p ${product_path}/priv-app/Phonesky
+        cp $MODPATH/common/files/stonecold-playstore/com.android.vending.apk /sdcard/Phonesky.apk
+        #cp $MODPATH/common/files/stonecold-playstore/com.android.vending.apk ${product_path}/priv-app/Phonesky/Phonesky.apk
+        #dex2oat64 --dex-file=${product_path}/priv-app/Phonesky/Phonesky.apk --oat-file=${product_path}/priv-app/Phonesky/Phonesky.odex
+        #mkdir -p ${product_path}/priv-app/Phonesky/oat/arm64
+        #mv ${product_path}/priv-app/Phonesky/Phonesky.odex ${product_path}/priv-app/Phonesky/Phonesky.vdex ${product_path}/priv-app/Phonesky/oat/arm64/
+        #mkdir -p ${product_path}/priv-app/Phonesky/lib/arm64
+        #cp -a $MODPATH/common/files/stonecold-playstore/lib/arm64/* ${product_path}/priv-app/Phonesky/lib/arm64/
+        #chmod 644 ${product_path}/priv-app/Phonesky/lib/arm64/*
         ui_print " - /product/etc/permissions/services.cn.google.xml"
         mkdir -p ${product_path}/etc/permissions
         cp $MODPATH/common/files/stonecold-playstore/services.cn.google.xml ${product_path}/etc/permissions/
@@ -437,6 +442,13 @@ if [ ! -z "${prc_apps_debloat_choice}" ]; then
         ui_print " - system.prop"
         cat $MODPATH/common/files/stonecold-debloat/system.prop >> $MODPATH/system.prop
         pm list packages -3 | grep -E 'cn.wps.moffice_eng|com.baidu.netdisk|com.lenovo.club.app|com.lenovo.hyperengine|com.lenovo.menu_assistant|com.newskyer.draw|com.qiyi.video.pad|com.sina.weibo|com.smile.gifmaker|com.sohu.inputmethod.sogou.oem|com.tencent.qqmusic|com.zui.calculator|com.zui.calendar|com.zui.calendar.overlay.avengers|com.zui.calendar.overlay.blue|com.zui.calendar.overlay.golden|com.zui.calendar.overlay.grace|com.zui.calendar.overlay.mains|com.zui.calendar.overlay.mostbeautiful|com.zui.calendar.overlay.paintingr|com.zui.calendar.overlay.pink|com.zui.calendar.overlay.superhero|com.zui.recorder|com.zui.weather|io.moreless.tide|net.huanci.hsjpro' | sed -e 's/^.*package://g' | while read -r pkg
+        do
+            ui_print " - ${pkg} (preinstall)"
+            pm uninstall ${pkg}
+        done
+		
+		#16 ver
+        pm list packages -3 | grep -E 'com.lenovo.menu_assistant|com.zui.calendar|com.lenovo.club.app|cn.wps.moffice_eng|com.lenovo.hyperengine|com.sina.weibo|com.newskyer.draw|com.sohu.inputmethod.sogou.oem|io.moreless.tide|com.baidu.netdisk|com.tencent.qqmusic|com.zui.weather|net.huanci.hsjpro|com.zui.recorder|com.smile.gifmaker|com.qiyi.video.pad|com.motorola.mobiledesktop' | sed -e 's/^.*package://g' | while read -r pkg
         do
             ui_print " - ${pkg} (preinstall)"
             pm uninstall ${pkg}
@@ -592,7 +604,7 @@ if [ ! -z "${keyboard_mapping_choice}" ]; then
         ui_print "Applying keyboard mapping change..."
         ui_print " - /system/usr/keylayout/Vendor_17ef_Product_6175.kl"
         mkdir -p ${system_path}/usr/keylayout
-        cp -a $MODPATH/common/files/stonecold-keylayout/Vendor_17ef_Product_6175.kl ${system_path}/usr/keylayout/
+        cp -a $MODPATH/common/files/stonecold-keylayout/Vendor_17ef_Product_6175.kl ${system_path}/usr/keylayout/Vendor_17ef_Product_6175.kl
         ui_print "Keyboard mapping change applied."
     else
         ui_print "Keyboard mapping change skipped."
@@ -626,7 +638,7 @@ if [ ! -z "${multiple_space_choice}" ]; then
         ui_print "Activating Multiple Space..."
         ui_print " - system.prop"
         cat $MODPATH/common/files/stonecold-multiplespace/system.prop >> $MODPATH/system.prop
-        if [ "${version}" = "15.0" ]; then
+        if [ "${major_version}" = "15" ]; then
             cat $MODPATH/common/files/stonecold-multiplespace/ZUI_15.0.prop >> $MODPATH/system.prop
             mkdir -p ${product_path}/overlay
             ui_print " - /product/overlay/ZuiSettingsMultipleSpace.apk"
@@ -686,17 +698,18 @@ if [ ! -z "${bootanimation_choice}" ]; then
 fi
 
 # Framework patcher
-if [ "${framework_patch_choice}" = "Y" -o "${korean_patch_choice}" = "Y" ] || [ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${fingerprint}" = "Lenovo/TB320FC/TB320FC:14/UKQ1.231025.001/ZUI_16.0.324_240718_ROW:user/release-keys" ]; then
+if [ "${framework_patch_choice}" = "Y" ] || [ "${major_version}" = "15" -a "${korean_patch_choice}" = "Y" ] || [ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${major_version}" = "16" ]; then
     STEP=$((STEP + 1))
     ui_print "==> Step ${STEP}: Framework patch"
     ui_print "Installing Framework Patch..."
     framework_patched=N
-    if [ "${framework_patch_choice}" = "Y" -o "${korean_patch_choice}" = "Y" ] || [ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${fingerprint}" = "Lenovo/TB320FC/TB320FC:14/UKQ1.231025.001/ZUI_16.0.324_240718_ROW:user/release-keys" ]; then
+    if [ "${framework_patch_choice}" = "Y" ] || [ "${major_version}" = "15" -a "${korean_patch_choice}" = "Y" ] || [ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${major_version}" = "16" ]; then
         ui_print " - /system/framework/framework.jar"
-        multispace_patch="$([ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${fingerprint}" = "Lenovo/TB320FC/TB320FC:14/UKQ1.231025.001/ZUI_16.0.324_240718_ROW:user/release-keys" ] && echo "Y" || echo "N")"
+        multispace_patch="$([ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${major_version}" = "Y" ] && echo "Y" || echo "N")"
+		korean_patch="$([ "${major_version}" = "15" -a "${korean_patch_choice}" = "Y" ] && echo "Y" || echo "N")"
         rm -rf /data/local/tmp/framework-patch
         cp -a $MODPATH/common/files/stonecold-framework /data/local/tmp/framework-patch
-        . /data/local/tmp/framework-patch/framework-go ${korean_patch_choice:-N} ${multispace_patch:-N} ${framework_patch_choice:-N}
+        . /data/local/tmp/framework-patch/framework-go ${korean_patch:-N} ${multispace_patch:-N} ${framework_patch_choice:-N}
         if [ -e /data/local/tmp/framework-patch/framework-patched.jar ]; then
             framework_patched=Y
             mkdir -p ${system_path}/framework
@@ -706,11 +719,11 @@ if [ "${framework_patch_choice}" = "Y" -o "${korean_patch_choice}" = "Y" ] || [ 
             rm -rf /data/local/tmp/framework-patch
         fi
     fi
-    if [ "${korean_patch_choice}" = "Y" ]; then
+    if [ "${korean_patch}" = "Y" ]; then
         ui_print " - /system/framework/services.jar"
         rm -rf /data/local/tmp/services-patch
         cp -a $MODPATH/common/files/stonecold-framework /data/local/tmp/services-patch
-        . /data/local/tmp/services-patch/services-go ${korean_patch_choice:-N}
+        . /data/local/tmp/services-patch/services-go ${korean_patch:-N}
         if [ -e /data/local/tmp/services-patch/services-patched.jar ]; then
             framework_patched=Y
             mkdir -p ${system_path}/framework
@@ -783,6 +796,12 @@ ui_print "==> Additional Information"
 ui_print " To ensure all features work correctly, please install the Xposed module ZuiTweak."
 ui_print " 모든 기능이 정상적으로 동작하려면 Xposed 모듈 ZuiTweak을 설치해야 합니다."
 ui_print ""
+
+if [ "${google_play_choice}" = "Y" ]; then
+	ui_print " Please manually install /sdcard/Phonesky.apk to install the Google Play Store."
+	ui_print " Google Play Store 설치를 위하여 /sdcard/Phonesky.apk를 수동으로 설치하세요."
+	ui_print ""
+fi
 
 
 # Configuration complete
