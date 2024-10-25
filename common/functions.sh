@@ -164,7 +164,7 @@ $KSU && { [ $KSU_VER_CODE -lt 11184 ] && require_new_ksu; }
 [ "$APATCH" == "true" ] && KSU=true
 
 # Start debug
-set -x
+#set -x
 
 # Set variables
 [ -z $ARCH32 ] && ARCH32="$(echo $ABI32 | cut -c-3)"
