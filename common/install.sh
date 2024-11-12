@@ -705,7 +705,7 @@ if [ "${framework_patch_choice}" = "Y" ] || [ "${major_version}" = "15" -a "${ko
     framework_patched=N
     if [ "${framework_patch_choice}" = "Y" ] || [ "${major_version}" = "15" -a "${korean_patch_choice}" = "Y" ] || [ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${major_version}" = "16" ]; then
         ui_print " - /system/framework/framework.jar"
-        multispace_patch="$([ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${major_version}" = "Y" ] && echo "Y" || echo "N")"
+        multispace_patch="$([ "${multiple_space_choice}" = "Y" -a "${model}" = "TB320FC" -a "${region}" = "ROW" -a "${major_version}" = "16" ] && echo "Y" || echo "N")"
 		korean_patch="$([ "${major_version}" = "15" -a "${korean_patch_choice}" = "Y" ] && echo "Y" || echo "N")"
         rm -rf /data/local/tmp/framework-patch
         cp -a $MODPATH/common/files/stonecold-framework /data/local/tmp/framework-patch
