@@ -418,15 +418,15 @@ if [ ! -z "${debloat_apps_choice}" ]; then
 			pkgs="com.google.android.apps.subscriptions.red com.google.android.gm com.google.android.apps.tachyon com.google.android.apps.docs com.google.android.apps.maps com.google.android.apps.kids.home com.google.android.contacts com.google.android.partnersetup com.google.android.videos com.netflix.mediaclient com.google.android.calendar com.google.android.apps.books com.google.android.keep com.google.android.apps.mediahome.launcher com.tblenovo.center com.google.android.apps.googleassistant"
 		fi
 
-		pm list packages | grep -E "$(echo "${pkgs}" | sed -e 's/ /|/g')" | sed -e 's/^.*package://g' | while read -r pkg
+		pm list packages | grep -E ":($(echo "${pkgs}" | sed -e 's/ /|/g'))$" | sed -e 's/^.*package://g' | while read -r pkg
 		do
 			ui_print " - ${pkg} (system)"
 			pm_path="$(pm path "${pkg}")"
-			if [ "${pm_path}" != "$(echo "${pm_path}" | sed -e 's/^\/data\//g')" ]; then
+			if [ "${pm_path}" != "$(echo "${pm_path}" | sed -e 's/^\/data\///g')" ]; then
 				pm uninstall ${pkg}
 			fi
 			pm_path="$(pm path "${pkg}")"
-			if [ "${pm_path}" = "$(echo "${pm_path}" | sed -e 's/^\/data\//g')" ]; then
+			if [ "${pm_path}" = "$(echo "${pm_path}" | sed -e 's/^\/data\///g')" ]; then
 				pm uninstall --user 0 ${pkg}
 				pm disable-user --user 0 ${pkg}
 			fi
