@@ -1,7 +1,7 @@
 id=stonecold-zuitweak
 name=ZuiTweak
-version=v1.0.0
-versionCode=100
+version=v3.4.0
+versionCode=340
 author=StoneCold
 description=A Magisk/APatch module for applying various tweaks to Lenovo Zui-based ROMs, including Korean localization for the Xiaoxin Pad Pro 12.7 and functionality enhancements for the Lenovo Y700 2023.
 updateJson=https://raw.githubusercontent.com/forumi0721/ZuiTweak-magisk/latest/update.json
